@@ -1170,6 +1170,9 @@
       modalImportance.value = "Normal";
       modalDescription.value = "";
       modalDelete.style.display = "none";
+          // Hide new project fields by default
+          const newProjectFields = document.getElementById("newProjectFields");
+          if (newProjectFields) newProjectFields.style.display = "none";
     }
   }
   function closeModal() {
