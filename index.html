@@ -1066,10 +1066,14 @@
   }
 
 function renderCalendarView(projects) {
+    let projects = projectsData;
+  if (filterProjectId !== 'all') {
+    projects = projectsData.filter(p => p.id === filterProjectId);
+  }
   const tasks = flattenTasks(projects);
   const today = new Date();
   const year = today.getFullYear();
-  const month = today.getMonth();
+  const month = today.() {
   const first = new Date(year,month,1);
   const offset = first.getDay();
   const daysInMonth = new Date(year,month+1,0).getDate();
