@@ -1065,10 +1065,59 @@
     $viewContainer.innerHTML = html;
   }
 
-  function renderCalendarView() {
-    $viewContainer.innerHTML = '<div class="card"><p style="text-align:center;padding:20px;">Calendar view - coming soon</p></div>';
+function renderCalendarView(projects) {
+  const tasks = flattenTasks(projects);
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const first = new Date(year,month,1);
+  const offset = first.getDay();
+  const daysInMonth = new Date(year,month+1,0).getDate();
+  const cells = [];
+  for (let i=0;i<offset;i++) cells.push(null);
+  for (let d=1;d<=daysInMonth;d++) cells.push(d);
+  const byDay = {};
+  tasks.forEach(task => {
+    const d = parseDateSafe(task.deadline);
+    if (!d || d.getFullYear()!==year || d.getMonth()!==month) return;
+    const day = d.getDate();
+    if (!byDay[day]) byDay[day] = [];
+    byDay[day].push(task);
+  });
+  let title = currentFilter==="all" ? "All projects" : "";
+  if (currentFilter!=="all") {
+    const p = projectsData.find(p=>p.id===currentFilter);
+    if (p) title = p.emoji+" "+p.name;
   }
-
+  let html = '<div class="card">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:0.8rem;">';
+  html += '<div><strong>'+title+'</strong></div>';
+  html += '<div style="color:var(--text-muted);">'+today.toLocaleDateString(undefined,{month:"long",year:"numeric"})+'</div>';
+  html += '</div><div class="calendar-grid">';
+  ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d => {
+    html += '<div class="calendar-day-header">'+d+'</div>';
+  });
+  cells.forEach(day => {
+    if (day===null) {
+      html += '<div class="calendar-cell"></div>';
+    } else {
+      const list = byDay[day] || [];
+      const dateStr = new Date(year, month, day).toISOString().slice(0,10);
+      html += '<div class="calendar-cell" data-date="'+dateStr+'">';
+      html += '<div class="calendar-date">'+day+'</div>';
+      list.forEach(task => {
+        const bgClass = getImportanceClass(task.importance);
+        const completedClass = task.status === "Complete" ? "completed-text" : "";
+        html += '<div class="calendar-task-pill '+bgClass+'" draggable="true" data-task-id="'+task.id+'" data-project-id="'+task.projectId+'" data-milestone-id="'+task.milestoneId+'">';
+        html += '<span class="'+completedClass+'">'+task.projectEmoji+' '+task.title+'</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+  });
+  html += '</div></div>';
+  viewContainer.innerHTML = html;
+}
   function renderMatrixView() {
     let tasks = flattenTasks(projectsData);
     if (filterProjectId !== 'all') {
