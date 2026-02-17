@@ -1088,12 +1088,11 @@ function renderCalendarView(projects) {
     if (!byDay[day]) byDay[day] = [];
     byDay[day].push(task);
   });
-  let title = currentFilter==="all" ? "All projects" : "";
-  if (currentFilter!=="all") {
-    const p = projectsData.find(p=>p.id===currentFilter);
+  let title = filterProjectId==="all" ? "All projects" : "";  if (currentFilter!=="all") {
+  if (filterProjectId!=="all") {
+    const p = projectsData.find(p=>p.id===filterProjectId);
     if (p) title = p.emoji+" "+p.name;
-  }
-  let html = '<div class="card">';
+  }  let html = '<div class="card">';
   html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:0.8rem;">';
   html += '<div><strong>'+title+'</strong></div>';
   html += '<div style="color:var(--text-muted);">'+today.toLocaleDateString(undefined,{month:"long",year:"numeric"})+'</div>';
