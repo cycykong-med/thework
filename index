@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>The Work Embed</title>
+<style>
+  :root {
+    --bg-main: #f7f1e5;
+    --bg-card: #fdf7ec;
+    --bg-alt: #f3e7d3;
+    --border-soft: #d3c0a8;
+    --accent: #c07a40;
+    --accent-soft: #e0b48a;
+    --text-main: #3b2a1c;
+    --text-muted: #7a6146;
+    --scrollbar-bg: #e7d6c3;
+    --danger: #c0392b;
+    --title-font: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+    --content-font: "Open Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  body.theme-light {
+    --bg-main: #f5f5f5;
+    --bg-card: #ffffff;
+    --bg-alt: #eeeeee;
+    --border-soft: #cccccc;
+    --accent: #3f51b5;
+    --accent-soft: #c5cae9;
+    --text-main: #212121;
+    --text-muted: #757575;
+    --scrollbar-bg: #e0e0e0;
+  }
+
+  body.theme-dark {
+    --bg-main: #1f1f1f;
+    --bg-card: #2c2c2c;
+    --bg-alt: #333333;
+    --border-soft: #555555;
+    --accent: #ffb74d;
+    --accent-soft: #ffcc80;
+    --text-main: #f5f5f5;
+    --text-muted: #bdbdbd;
+    --scrollbar-bg: #424242;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: radial-gradient(circle at top, var(--bg-card) 0, var(--bg-main) 45%, var(--bg-alt) 100%);
+    color: var(--text-main);
+    font-family: var(--content-font);
+  }
+
+  #app {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 16px 16px 72px;
+  }
+
+  h1 {
+    margin: 0 0 4px;
+    font-size: 1.4rem;
+    letter-spacing: 0.04em;
+    font-family: var(--title-font);
+  }
+
+  .subtitle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .header-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  select, button {
+    border-radius: 999px;
+    border: 1px solid var(--border-soft);
+    background: rgba(253, 247, 236, 0.9);
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    color: var(--text-main);
+    outline: none;
+    font-family: var(--content-font);
+  }
+
+  body.theme-dark select,
+  body.theme-dark button {
+    background: rgba(44,44,44,0.95);
+    color: var(--text-main);
+    border-color: var(--border-soft);
+  }
+
+  select:focus { border-color: var(--accent); }
+
+  .pill {
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--border-soft);
+    background: rgba(253, 247, 236, 0.9);
+    color: var(--text-muted);
+  }
+  body.theme-dark .pill {
+    background: rgba(44,44,44,0.95);
+  }
+
+  .view-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .view-tab {
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    border: 1px solid var(--border-soft);
+    background: rgba(253, 247, 236, 0.9);
+    cursor: pointer;
+    color: var(--text-main);
+  }
+  body.theme-dark .view-tab {
+    background: rgba(44,44,44,0.95);
+    color: var(--text-muted);
+  }
+  .view-tab.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  body.theme-dark .view-tab.active {
+    background: var(--accent);
+    color: #1f1f1f;
+    border-color: var(--accent);
+  }
+
+  .card {
+    background: rgba(253, 247, 236, 0.9);
+    border-radius: 12px;
+    border: 1px solid var(--border-soft);
+    padding: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  body.theme-light .card { background: rgba(255,255,255,0.95); }
+  body.theme-dark .card { background: rgba(44,44,44,0.95); }
+
+  .content { display: flex; flex-direction: column; gap: 10px; }
+
+  .task-list { max-height: 360px; overflow: auto; }
+
+  .task-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-radius: 10px;
+    padding: 6px 8px;
+    margin-bottom: 6px;
+    border: 1px solid rgba(0,0,0,0.04);
+    cursor: pointer;
+  }
+
+  .task-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.8rem;
+  }
+
+  .task-title {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .completed-text {
+    text-decoration: line-through;
+    opacity: 0.7;
+  }
+
+  .badge {
+    border-radius: 999px;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    border: 1px solid rgba(0,0,0,0.08);
+    background: rgba(255,255,255,0.7);
+  }
+  body.theme-dark .badge { background: rgba(0,0,0,0.25); }
+
+  .task-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    justify-content: flex-end;
+  }
+
+  .task-description-expanded {
+    font-size: 0.75rem;
+    margin-top: 4px;
+  }
+
+  .bu-list {
+    list-style: none;
+    margin: 2px 0 0;
+    padding-left: 18px;
+  }
+  .bu-item { margin: 0; padding: 0; }
+  .bu-prefix { font-size: 0.8em; margin-right: 4px; }
+
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+    font-size: 0.75rem;
+  }
+  .calendar-day-header {
+    text-align: center;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: 2px 0;
+  }
+  .calendar-cell {
+    min-height: 60px;
+    background: rgba(253,247,236,0.9);
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.04);
+    padding: 3px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  body.theme-light .calendar-cell { background: rgba(255,255,255,0.9); }
+  body.theme-dark .calendar-cell { background: rgba(44,44,44,0.95); }
+
+  .calendar-date { font-size: 0.7rem; color: var(--text-muted); }
+  .calendar-task-pill {
+    border-radius: 999px;
+    padding: 1px 4px;
+    font-size: 0.65rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid rgba(0,0,0,0.05);
+    cursor: move;
+  }
+
+  .matrix-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(120px, auto));
+    gap: 6px;
+    font-size: 0.75rem;
+  }
+  .matrix-cell {
+    border-radius: 10px;
+    border: 1px solid var(--border-soft);
+    background: rgba(253,247,236,0.9);
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  body.theme-light .matrix-cell { background: rgba(255,255,255,0.95); }
+  body.theme-dark .matrix-cell { background: rgba(44,44,44,0.95); }
+
+  .matrix-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+  .matrix-task {
+    border-radius: 999px;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid rgba(0,0,0,0.05);
+    cursor: pointer;
+  }
+
+  .importance-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(0,0,0,0.1);
+  }
+  .importance-critical { background: #c39bd3; }
+  .importance-high { background: #e57373; }
+  .importance-normal { background: #ffe082; }
+  .importance-low { background: #a5d6a7; }
+
+  .importance-critical-bg { background: #f4e7fb; }
+  .importance-high-bg { background: #fde5e3; }
+  .importance-normal-bg { background: #fff7da; }
+  .importance-low-bg { background: #e9f7ea; }
+  body.theme-dark .importance-critical-bg { background: #4a3456; }
+  body.theme-dark .importance-high-bg { background: #4a2626; }
+  body.theme-dark .importance-normal-bg { background: #514522; }
+  body.theme-dark .importance-low-bg { background: #29422d; }
+
+  /* Overdue box */
+  .overdue-box {
+    margin-top: 8px;
+    padding: 6px;
+    border-radius: 10px;
+    border: 1px dashed var(--border-soft);
+    background: rgba(253,247,236,0.9);
+  }
+  body.theme-dark .overdue-box {
+    background: rgba(44,44,44,0.95);
+  }
+  .overdue-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .overdue-task {
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 2px;
+    border-radius: 999px;
+    padding: 2px 6px;
+    border: 1px solid rgba(0,0,0,0.05);
+    cursor: pointer;
+  }
+
+  /* Buttons bottom corners */
+  .fab, .settings-fab {
+    border-radius: 999px;
+    border: none;
+    background: rgba(0,0,0,0.05);
+    color: var(--text-main);
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    cursor: pointer;
+    z-index: 9999;
+  }
+  .fab {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 40px;
+    height: 40px;
+  }
+  .settings-fab {
+    position: fixed;
+    left: 20px;
+    bottom: 20px;
+    width: 40px;
+    height: 40px;
+  }
+  body.theme-dark .fab,
+  body.theme-dark .settings-fab {
+    background: rgba(255,255,255,0.05);
+  }
+  .fab:hover,
+  .settings-fab:hover {
+    background: rgba(0,0,0,0.12);
+  }
+
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.25);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9998;
+  }
+  .modal {
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border-soft);
+    padding: 12px;
+    width: min(420px, 90vw);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    font-size: 0.8rem;
+  }
+  .modal h2 {
+    margin: 0 0 6px;
+    font-size: 1rem;
+    font-family: var(--title-font);
+  }
+  .modal-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  .modal label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 2px;
+  }
+  .modal input[type="text"],
+  .modal textarea,
+  .modal select,
+  .modal input[type="date"] {
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid var(--border-soft);
+    padding: 4px 6px;
+    font-size: 0.8rem;
+    background: rgba(253,247,236,0.9);
+    resize: vertical;
+  }
+  body.theme-light .modal input,
+  body.theme-light .modal textarea,
+  body.theme-light .modal select {
+    background: rgba(255,255,255,0.95);
+  }
+  body.theme-dark .modal input,
+  body.theme-dark .modal textarea,
+  body.theme-dark .modal select {
+    background: rgba(44,44,44,0.95);
+    color: var(--text-main);
+  }
+  .modal textarea { min-height: 60px; }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .modal button {
+    border-radius: 999px;
+    padding: 4px 10px;
+    border: 1px solid var(--border-soft);
+    background: rgba(253,247,236,0.9);
+    cursor: pointer;
+  }
+  body.theme-dark .modal button {
+    background: rgba(44,44,44,0.95);
+  }
+  .modal button.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .status-pill {
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.6);
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+
+  .task-list::-webkit-scrollbar { width: 6px; }
+  .task-list::-webkit-scrollbar-track {
+    background: var(--scrollbar-bg);
+    border-radius: 999px;
+  }
+  .task-list::-webkit-scrollbar-thumb {
+    background: #b59c7f;
+    border-radius: 999px;
+  }
+  body.theme-light .task-list::-webkit-scrollbar-thumb { background: #9e9e9e; }
+  body.theme-dark .task-list::-webkit-scrollbar-thumb { background: #757575; }
+
+  #settingsPanel {
+    position: fixed;
+    left: 20px;
+    bottom: 70px;
+    width: min(320px, 90vw);
+    z-index: 9998;
+    display: none;
+  }
+
+  .settings-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border-soft);
+    padding: 10px;
+    font-size: 0.8rem;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+  }
+
+  .settings-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .settings-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .settings-group {
+    flex: 1 1 160px;
+  }
+
+  .settings-group label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .settings-select {
+    width: 100%;
+    border-radius: 999px;
+    border: 1px solid var(--border-soft);
+    padding: 4px 8px;
+    background: rgba(253,247,236,0.9);
+    font-size: 0.8rem;
+  }
+  body.theme-light .settings-select { background: rgba(255,255,255,0.95); }
+  body.theme-dark .settings-select {
+    background: rgba(44,44,44,0.95);
+    color: var(--text-main);
+  }
+
+  .autocomplete-container {
+    position: relative;
+  }
+  .autocomplete-list {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    background: var(--bg-card);
+    border-radius: 8px;
+    border: 1px solid var(--border-soft);
+    margin-top: 2px;
+    max-height: 140px;
+    overflow: auto;
+    font-size: 0.8rem;
+    z-index: 10000;
+  }
+  .autocomplete-item {
+    padding: 4px 8px;
+    cursor: pointer;
+  }
+  .autocomplete-item:hover,
+  .autocomplete-item.active {
+    background: var(--accent-soft);
+    color: var(--text-main);
+  }
+
+  @media (max-width: 700px) {
+    .matrix-grid {
+      grid-template-columns: 1fr;
+      grid-template-rows: repeat(4, minmax(100px, auto));
+    }
+    .header-bar {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>
+</head>
+<body class="theme-sepia">
+<div id="app">
+  <div class="header-bar">
+    <div class="header-group">
+      <h1 id="appTitle">The Work</h1>
+      <div class="subtitle">Sepia workspace for projects · milestones · tasks</div>
+    </div>
+    <div class="header-group">
+      <div class="controls">
+        <select id="projectFilter"></select>
+        <div class="pill">
+          <span style="font-size:0.85em;">📅</span>
+          <span id="currentDateLabel"></span>
+        </div>
+      </div>
+      <div class="view-tabs" id="viewTabs">
+        <button class="view-tab active" data-view="list">List</button>
+        <button class="view-tab" data-view="calendar">Calendar</button>
+        <button class="view-tab" data-view="matrix">Eisenhower</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div id="viewContainer"></div>
+  </div>
+</div>
+
+<button class="fab" id="addTaskBtn" title="Add task">＋</button>
+<button class="settings-fab" id="settingsFab" title="Settings">⚙️</button>
+
+<div id="settingsPanel">
+  <div class="settings-card">
+    <div class="settings-section">
+      <div style="font-size:0.9rem;font-weight:600;">Appearance settings</div>
+      <div class="settings-row">
+        <div class="settings-group">
+          <label for="titleFontSelect">Title font</label>
+          <select id="titleFontSelect" class="settings-select">
+            <option value='"Palatino Linotype","Book Antiqua",Palatino,serif'>Palatino (default)</option>
+            <option value='"Times New Roman",Times,serif'>Times New Roman</option>
+            <option value='"Georgia",serif'>Georgia</option>
+            <option value='"Garamond",serif'>Garamond</option>
+          </select>
+        </div>
+        <div class="settings-group">
+          <label for="contentFontSelect">Content font</label>
+          <select id="contentFontSelect" class="settings-select">
+            <option value='"Open Sans",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif'>Open Sans (default)</option>
+            <option value='system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif'>System UI</option>
+            <option value='"Roboto","Helvetica Neue",Arial,sans-serif'>Roboto</option>
+            <option value='"Source Sans Pro","Helvetica Neue",Arial,sans-serif'>Source Sans Pro</option>
+          </select>
+        </div>
+        <div class="settings-group">
+          <label for="themeSelect">Theme</label>
+          <select id="themeSelect" class="settings-select">
+            <option value="sepia">Sepia (default)</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </div>
+      </div>
+      <div style="font-size:0.75rem;color:var(--text-muted);margin-top:6px;">
+        Settings and tasks are stored locally in this browser (via localStorage) where supported.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <h2 id="modalTitleHeader">Add Task</h2>
+    <div class="modal-row">
+      <div style="flex:1;">
+        <label>Project</label>
+        <select id="modalProject"></select>
+      </div>
+      <div style="flex:1;" class="autocomplete-container">
+        <label>Milestone</label>
+        <input type="text" id="modalMilestone" placeholder="e.g. Draft submission" autocomplete="off" />
+        <div id="milestoneAutocomplete" class="autocomplete-list" style="display:none;"></div>
+      </div>
+    </div>
+    <div class="modal-row">
+      <div style="flex:1;">
+        <label>Title</label>
+        <input type="text" id="modalTaskTitle" placeholder="Short task title" />
+      </div>
+    </div>
+    <div class="modal-row">
+      <div style="flex:1;">
+        <label>Status</label>
+        <select id="modalStatus">
+          <option>To start</option>
+          <option>To wait</option>
+          <option>To contact</option>
+          <option>Long task</option>
+          <option>Short task</option>
+          <option>Complete</option>
+        </select>
+      </div>
+      <div style="flex:1;">
+        <label>Deadline</label>
+        <input type="date" id="modalDeadline" />
+      </div>
+      <div style="flex:1;">
+        <label>Importance</label>
+        <select id="modalImportance">
+          <option value="Critical">Critical</option>
+          <option value="High">High</option>
+          <option value="Normal" selected>Normal</option>
+          <option value="Low">Low</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-row">
+      <div style="flex:1;">
+        <label>Description (bullet journal style)</label>
+        <textarea id="modalDescription" placeholder="* task line&#10;- note line&#10;o event line&#10;> postponed&#10;v delegated"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button id="modalDelete" style="display:none;color:var(--danger);border-color:var(--danger);background:transparent;">Delete</button>
+      <button id="modalCancel">Cancel</button>
+      <button class="primary" id="modalSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const projectsData = [
+    {
+      id: "proj1",
+      emoji: "🧬",
+      name: "Virology Thesis",
+      milestones: [
+        {
+          id: "m1",
+          title: "Lit Review",
+          tasks: [
+            {
+              id: "t1",
+              title: "Screen full-texts",
+              status: "To start",
+              deadline: "2026-02-25",
+              importance: "Critical",
+              description: "* Finish inclusion criteria\\n- Check supervisor comments\\no Meeting with PI on Friday\\n> Move non-critical papers"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      id: "proj2",
+      emoji: "⚖️",
+      name: "Competition Law Essay",
+      milestones: [
+        {
+          id: "m2",
+          title: "Outline",
+          tasks: [
+            {
+              id: "t2",
+              title: "Case list",
+              status: "To contact",
+              deadline: "2026-02-19",
+              importance: "High",
+              description: "* Confirm with supervisor\\n- Note missing citations"
+            }
+          ]
+        }
+      ]
+    }
+  ];
+
+  const STORAGE_KEY = "cometPlannerProjects_v1";
+
+  function saveProjects() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(projectsData)); } catch(e){}
+  }
+  function loadProjects() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        projectsData.length = 0;
+        parsed.forEach(p => projectsData.push(p));
+      }
+    } catch(e){}
+  }
+
+  const settings = {
+    theme: "sepia",
+    titleFont: '"Palatino Linotype","Book Antiqua",Palatino,serif',
+    contentFont: '"Open Sans",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif'
+  };
+
+  function applySettings() {
+    document.documentElement.style.setProperty("--title-font", settings.titleFont);
+    document.documentElement.style.setProperty("--content-font", settings.contentFont);
+    document.body.className = "";
+    if (settings.theme === "light") document.body.classList.add("theme-light");
+    else if (settings.theme === "dark") document.body.classList.add("theme-dark");
+    else document.body.classList.add("theme-sepia");
+  }
+
+  function getImportanceClass(importance) {
+    const map = {
+      "Critical": "importance-critical-bg",
+      "High": "importance-high-bg",
+      "Normal": "importance-normal-bg",
+      "Low": "importance-low-bg"
+    };
+    return map[importance] || "importance-normal-bg";
+  }
+  function getImportanceDotClass(importance) {
+    const map = {
+      "Critical": "importance-critical",
+      "High": "importance-high",
+      "Normal": "importance-normal",
+      "Low": "importance-low"
+    };
+    return map[importance] || "importance-normal";
+  }
+  function parseBulletJournal(text) {
+    if (!text) return "";
+    const lines = text.split(/\r?\n/);
+    const items = lines.map(line => {
+      const trimmed = line.trim();
+      if (!trimmed) return null;
+      const first = trimmed[0];
+      let prefix = "";
+      let content = trimmed.slice(1).trim();
+
+      if (first === "*") { prefix = '<span class="bu-prefix">⚫</span>'; }
+      else if (first === "v" || first === "V") { prefix = '<span class="bu-prefix">🔽</span>'; }
+      else if (first === ">") { prefix = '<span class="bu-prefix">▶️</span>'; }
+      else if (first === "-") { prefix = '<span class="bu-prefix">➖</span>'; }
+      else if (first === "o" || first === "O") { prefix = '<span class="bu-prefix">⭕</span>'; }
+      else {
+        content = trimmed;
+        prefix = "";
+      }
+
+      if (!content) content = trimmed;
+      return '<li class="bu-item">' + prefix + content + '</li>';
+    }).filter(Boolean);
+
+    if (!items.length) return "";
+    return '<ul class="bu-list">' + items.join("") + '</ul>';
+  }
+  function flattenTasks(projects) {
+    const out = [];
+    projects.forEach(p => {
+      p.milestones.forEach(m => {
+        m.tasks.forEach(t => {
+          out.push({ projectId: p.id, projectEmoji: p.emoji, projectName: p.name,
+                     milestoneId: m.id, milestoneTitle: m.title, ...t });
+        });
+      });
+    });
+    return out;
+  }
+  function parseDateSafe(str) {
+    if (!str) return null;
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  function isUrgent(task) {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const d = parseDateSafe(task.deadline);
+    if (!d) return false;
+    const diffDays = (d - today)/(1000*60*60*24);
+    if (diffDays <= 3 && diffDays >= 0) return true;
+    if (task.importance === "Critical" && diffDays <= 14 && diffDays >= 0) return true;
+    return false;
+  }
+  function isImportant(task) {
+    return task.importance === "Critical" || task.importance === "High";
+  }
+  function isOverdue(task) {
+    const d = parseDateSafe(task.deadline);
+    if (!d) return false;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    return d < today;
+  }
+  function formatDateShort(str) {
+    const d = parseDateSafe(str);
+    if (!d) return "";
+    return d.toLocaleDateString(undefined,{month:"short",day:"numeric"});
+  }
+
+  const projectFilterEl = document.getElementById("projectFilter");
+  const currentDateLabel = document.getElementById("currentDateLabel");
+  const viewContainer = document.getElementById("viewContainer");
+  const viewTabs = Array.from(document.querySelectorAll(".view-tab"));
+  const addTaskBtn = document.getElementById("addTaskBtn");
+  const settingsFab = document.getElementById("settingsFab");
+  const settingsPanel = document.getElementById("settingsPanel");
+
+  const modalBackdrop = document.getElementById("modalBackdrop");
+  const modalProject = document.getElementById("modalProject");
+  const modalMilestone = document.getElementById("modalMilestone");
+  const milestoneAutocomplete = document.getElementById("milestoneAutocomplete");
+  const modalTaskTitle = document.getElementById("modalTaskTitle");
+  const modalStatus = document.getElementById("modalStatus");
+  const modalDeadline = document.getElementById("modalDeadline");
+  const modalImportance = document.getElementById("modalImportance");
+  const modalDescription = document.getElementById("modalDescription");
+  const modalCancel = document.getElementById("modalCancel");
+  const modalSave = document.getElementById("modalSave");
+  const modalDelete = document.getElementById("modalDelete");
+  const modalTitleHeader = document.getElementById("modalTitleHeader");
+
+  const titleFontSelect = document.getElementById("titleFontSelect");
+  const contentFontSelect = document.getElementById("contentFontSelect");
+  const themeSelect = document.getElementById("themeSelect");
+
+  let currentView = "list";
+  let currentFilter = "all";
+  let editingTaskRef = null;
+  let autocompleteIndex = -1;
+
+  function initSelectors() {
+    projectFilterEl.innerHTML = "";
+    const allOpt = document.createElement("option");
+    allOpt.value = "all";
+    allOpt.textContent = "All projects";
+    projectFilterEl.appendChild(allOpt);
+    projectsData.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.emoji + " " + p.name;
+      projectFilterEl.appendChild(opt);
+
+      const optModal = opt.cloneNode(true);
+      modalProject.appendChild(optModal);
+    });
+    projectFilterEl.value = "all";
+    modalProject.value = projectsData[0]?.id || "";
+
+    const today = new Date();
+    currentDateLabel.textContent = today.toLocaleDateString(undefined,{
+      weekday:"short",year:"numeric",month:"short",day:"numeric"
+    });
+  }
+
+  function getFilteredProjects() {
+    if (currentFilter === "all") return projectsData;
+    return projectsData.filter(p => p.id === currentFilter);
+  }
+
+  function render() {
+    const filtered = getFilteredProjects();
+    if (!filtered.length) { viewContainer.innerHTML = ""; return; }
+    if (currentView === "list") renderListView(filtered);
+    else if (currentView === "calendar") renderCalendarView(filtered);
+    else renderMatrixView(filtered);
+  }
+
+  function renderListView(projects) {
+    const tasks = flattenTasks(projects);
+    tasks.sort((a, b) => {
+      const da = parseDateSafe(a.deadline);
+      const db = parseDateSafe(b.deadline);
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return da - db;
+    });
+
+    let html = '<div class="card"><div class="task-list">';
+    if (!tasks.length) {
+      html += '<div style="font-size:0.8rem;color:var(--text-muted);">No tasks yet. Use the + button to add one.</div>';
+    } else {
+      const byProject = {};
+      tasks.forEach(t => {
+        if (!byProject[t.projectId]) byProject[t.projectId] = { emoji:t.projectEmoji, name:t.projectName, milestones:{} };
+        const g = byProject[t.projectId];
+        if (!g.milestones[t.milestoneId]) g.milestones[t.milestoneId] = { title:t.milestoneTitle, tasks:[] };
+        g.milestones[t.milestoneId].tasks.push(t);
+      });
+
+      Object.values(byProject).forEach(p => {
+        html += '<div style="margin-bottom:10px;">';
+        html += '<div style="font-size:0.85rem;font-weight:600;margin-bottom:4px;color:var(--text-muted);">'
+             + p.emoji + " " + p.name + "</div>";
+        Object.values(p.milestones).forEach(m => {
+          html += '<div style="margin-bottom:6px;">';
+          html += '<div style="font-size:0.8rem;font-weight:600;margin-bottom:2px;color:var(--text-muted);">'
+               + p.emoji + " Milestone: " + m.title + "</div>";
+          m.tasks.forEach(task => {
+            const impClass = getImportanceClass(task.importance);
+            const completedClass = task.status === "Complete" ? "completed-text" : "";
+            html += '<div class="task-item '+impClass+'" data-task-id="'+task.id+'" data-project-id="'+task.projectId+'" data-milestone-id="'+task.milestoneId+'">';
+            html += '  <div class="task-header">';
+            html += '    <div class="task-title '+completedClass+'"><span>'+task.projectEmoji+'</span><span>'+task.title+'</span></div>';
+            html += '    <div class="task-meta">';
+            html += '      <span class="badge status-pill status-'+task.status.replace(/\s/g,"\\ ")+'">'+task.status+'</span>';
+            html += '      <span class="badge">'+task.importance+'</span>';
+            html += '      <span>'+formatDateShort(task.deadline)+'</span>';
+            html += '    </div>';
+            html += '  </div>';
+            html += '</div>';
+          });
+          html += '</div>';
+        });
+        html += '</div>';
+      });
+    }
+    html += '</div></div>';
+    viewContainer.innerHTML = html;
+  }
+
+  function renderCalendarView(projects) {
+    const tasks = flattenTasks(projects);
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const first = new Date(year,month,1);
+    const offset = first.getDay();
+    const daysInMonth = new Date(year,month+1,0).getDate();
+    const cells = [];
+    for (let i=0;i<offset;i++) cells.push(null);
+    for (let d=1;d<=daysInMonth;d++) cells.push(d);
+    const byDay = {};
+    tasks.forEach(task => {
+      const d = parseDateSafe(task.deadline);
+      if (!d || d.getFullYear()!==year || d.getMonth()!==month) return;
+      const day = d.getDate();
+      if (!byDay[day]) byDay[day] = [];
+      byDay[day].push(task);
+    });
+
+    let title = currentFilter==="all" ? "All projects" : "";
+    if (currentFilter!=="all") {
+      const p = projectsData.find(p=>p.id===currentFilter);
+      if (p) title = p.emoji+" "+p.name;
+    }
+
+    let html = '<div class="card">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:0.8rem;">';
+    html += '<div><strong>'+title+'</strong></div>';
+    html += '<div style="color:var(--text-muted);">'+today.toLocaleDateString(undefined,{month:"long",year:"numeric"})+'</div>';
+    html += '</div><div class="calendar-grid">';
+    ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d => {
+      html += '<div class="calendar-day-header">'+d+'</div>';
+    });
+    cells.forEach(day => {
+      if (day===null) {
+        html += '<div class="calendar-cell"></div>';
+      } else {
+        const list = byDay[day] || [];
+        const dateStr = new Date(year, month, day).toISOString().slice(0,10);
+        html += '<div class="calendar-cell" data-date="'+dateStr+'"><div class="calendar-date">'+day+'</div>';
+        list.forEach(task => {
+          const bgClass = getImportanceClass(task.importance);
+          const completedClass = task.status === "Complete" ? "completed-text" : "";
+          html += '<div class="calendar-task-pill '+bgClass+'" draggable="true" data-task-id="'+task.id+'" data-project-id="'+task.projectId+'" data-milestone-id="'+task.milestoneId+'">';
+          html += '<span class="'+completedClass+'">'+task.projectEmoji+' '+task.title+'</span>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+    });
+    html += '</div></div>';
+    viewContainer.innerHTML = html;
+  }
+
+  function renderMatrixView(projects) {
+    const allTasks = flattenTasks(projects);
+    const activeTasks = allTasks.filter(t => t.status !== "Complete");
+    const quadrants = { UI:[], UNI:[], NUI:[], NUNI:[] };
+    const overdue = [];
+
+    activeTasks.forEach(task => {
+      if (isOverdue(task)) {
+        overdue.push(task);
+        return;
+      }
+      const urgent = isUrgent(task);
+      const important = isImportant(task);
+      let key;
+      if (urgent && important) key="UI";
+      else if (urgent && !important) key="UNI";
+      else if (!urgent && important) key="NUI";
+      else key="NUNI";
+      quadrants[key].push(task);
+    });
+
+    const label = {
+      UI:"Urgent & Important",
+      UNI:"Urgent & Not Important",
+      NUI:"Not Urgent & Important",
+      NUNI:"Not Urgent & Not Important"
+    };
+
+    let html = '<div class="card"><div class="matrix-grid">';
+    ["UNI","UI","NUNI","NUI"].forEach(key => {
+      const list = quadrants[key];
+      html += '<div class="matrix-cell"><div class="matrix-title">'+label[key]+'</div>';
+      if (!list.length) {
+        html += '<div style="font-size:0.7rem;color:var(--text-muted);">No tasks.</div>';
+      } else {
+        list.forEach(task => {
+          const dotClass = getImportanceDotClass(task.importance);
+          const bgClass = getImportanceClass(task.importance);
+          html += '<div class="matrix-task '+bgClass+'" data-task-id="'+task.id+'" data-project-id="'+task.projectId+'" data-milestone-id="'+task.milestoneId+'">';
+          html += '<span>'+task.projectEmoji+'</span>';
+          html += '<span class="importance-dot '+dotClass+'"></span>';
+          html += '<span>'+task.title+'</span>';
+          html += '<span style="margin-left:auto;font-size:0.65rem;">'+formatDateShort(task.deadline)+'</span>';
+          html += '</div>';
+        });
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+
+    html += '<div class="overdue-box">';
+    html += '<div class="overdue-title">Overdue</div>';
+    if (!overdue.length) {
+      html += '<div style="font-size:0.7rem;color:var(--text-muted);">No overdue tasks.</div>';
+    } else {
+      overdue.forEach(task => {
+        const bgClass = getImportanceClass(task.importance);
+        html += '<div class="overdue-task '+bgClass+'" data-task-id="'+task.id+'" data-project-id="'+task.projectId+'" data-milestone-id="'+task.milestoneId+'">';
+        html += '<span>'+task.projectEmoji+'</span>';
+        html += '<span>'+task.title+'</span>';
+        html += '<span style="margin-left:auto;">'+formatDateShort(task.deadline)+'</span>';
+        html += '</div>';
+      });
+    }
+    html += '</div></div>';
+
+    viewContainer.innerHTML = html;
+  }
+
+  function openModal(mode, ref) {
+    modalBackdrop.style.display = "flex";
+    hideAutocomplete();
+    if (mode==="edit" && ref) {
+      const {projectId,milestoneId,taskId} = ref;
+      const project = projectsData.find(p=>p.id===projectId);
+      if (!project) return;
+      const milestone = project.milestones.find(m=>m.id===milestoneId);
+      if (!milestone) return;
+      const task = milestone.tasks.find(t=>t.id===taskId);
+      if (!task) return;
+      editingTaskRef = ref;
+      modalTitleHeader.textContent = "Edit Task";
+      modalProject.value = projectId;
+      modalMilestone.value = milestone.title;
+      modalTaskTitle.value = task.title;
+      modalStatus.value = task.status;
+      modalDeadline.value = task.deadline || "";
+      modalImportance.value = task.importance;
+      modalDescription.value = task.description || "";
+      modalDelete.style.display = "inline-block";
+    } else {
+      editingTaskRef = null;
+      modalTitleHeader.textContent = "Add Task";
+      modalProject.value = projectsData[0]?.id || "";
+      modalMilestone.value = "";
+      modalTaskTitle.value = "";
+      modalStatus.value = "To start";
+      modalDeadline.valueAsDate = new Date();
+      modalImportance.value = "Normal";
+      modalDescription.value = "";
+      modalDelete.style.display = "none";
+    }
+  }
+  function closeModal() {
+    modalBackdrop.style.display = "none";
+    hideAutocomplete();
+  }
+  function saveTaskFromModal() {
+    const projectId = modalProject.value;
+    const milestoneTitle = modalMilestone.value.trim() || "General";
+    const title = modalTaskTitle.value.trim() || "Untitled task";
+    const status = modalStatus.value;
+    const deadline = modalDeadline.value;
+    const importance = modalImportance.value;
+    const description = modalDescription.value;
+
+    const project = projectsData.find(p=>p.id===projectId);
+    if (!project) return;
+    let milestone = project.milestones.find(m=>m.title===milestoneTitle);
+    if (!milestone) {
+      milestone = { id:"m"+Date.now(), title:milestoneTitle, tasks:[] };
+      project.milestones.push(milestone);
+    }
+
+    if (editingTaskRef) {
+      const {milestoneId,taskId} = editingTaskRef;
+      const ms = project.milestones.find(m=>m.id===milestoneId) || milestone;
+      const task = ms.tasks.find(t=>t.id===taskId);
+      if (task) {
+        task.title = title;
+        task.status = status;
+        task.deadline = deadline;
+        task.importance = importance;
+        task.description = description;
+      }
+    } else {
+      milestone.tasks.push({
+        id: "t"+Date.now(),
+        title, status, deadline, importance, description
+      });
+    }
+
+    // Only change filter when adding from List view and current filter is "all"
+    if (!editingTaskRef && currentView === "list" && currentFilter === "all") {
+      currentFilter = projectId === "all" ? "all" : projectId;
+      projectFilterEl.value = currentFilter;
+    }
+
+    saveProjects();
+    closeModal();
+    render();
+  }
+  function deleteTaskFromModal() {
+    if (!editingTaskRef) return;
+    const {projectId,milestoneId,taskId} = editingTaskRef;
+    const project = projectsData.find(p=>p.id===projectId);
+    if (!project) return;
+    const milestone = project.milestones.find(m=>m.id===milestoneId);
+    if (!milestone) return;
+    milestone.tasks = milestone.tasks.filter(t=>t.id!==taskId);
+    saveProjects();
+    closeModal();
+    render();
+  }
+
+  function getMilestonesForProject(projectId) {
+    const project = projectsData.find(p=>p.id===projectId);
+    if (!project) return [];
+    const titles = new Set();
+    project.milestones.forEach(m => titles.add(m.title));
+    return Array.from(titles);
+  }
+
+  function updateMilestoneSuggestions() {
+    const projectId = modalProject.value;
+    const allMilestones = getMilestonesForProject(projectId);
+    const query = modalMilestone.value.trim().toLowerCase();
+    const suggestions = query
+      ? allMilestones.filter(t => t.toLowerCase().includes(query))
+      : allMilestones;
+
+    milestoneAutocomplete.innerHTML = "";
+    if (!suggestions.length) {
+      hideAutocomplete();
+      return;
+    }
+    suggestions.forEach((title, idx) => {
+      const div = document.createElement("div");
+      div.className = "autocomplete-item" + (idx===0 ? " active" : "");
+      div.textContent = title;
+      div.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        modalMilestone.value = title;
+        hideAutocomplete();
+      });
+      milestoneAutocomplete.appendChild(div);
+    });
+    autocompleteIndex = 0;
+    milestoneAutocomplete.style.display = "block";
+  }
+
+  function hideAutocomplete() {
+    milestoneAutocomplete.style.display = "none";
+    milestoneAutocomplete.innerHTML = "";
+    autocompleteIndex = -1;
+  }
+
+  modalMilestone.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      updateMilestoneSuggestions();
+    }
+  });
+
+  modalMilestone.addEventListener("input", () => {
+    if (milestoneAutocomplete.style.display !== "none") {
+      updateMilestoneSuggestions();
+    }
+  });
+
+  modalMilestone.addEventListener("keydown", (e) => {
+    if (milestoneAutocomplete.style.display === "none") return;
+
+    const items = Array.from(milestoneAutocomplete.querySelectorAll(".autocomplete-item"));
+    if (!items.length) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      autocompleteIndex = (autocompleteIndex + 1) % items.length;
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      autocompleteIndex = (autocompleteIndex - 1 + items.length) % items.length;
+    } else if (e.key === "Tab") {
+      e.preventDefault();
+      const chosen = items[autocompleteIndex] || items[0];
+      if (chosen) modalMilestone.value = chosen.textContent;
+      hideAutocomplete();
+      return;
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const chosen = items[autocompleteIndex] || items[0];
+      if (chosen) modalMilestone.value = chosen.textContent;
+      hideAutocomplete();
+      return;
+    } else if (e.key === "Escape") {
+      hideAutocomplete();
+      return;
+    } else {
+      return;
+    }
+
+    items.forEach((item, idx) => {
+      item.classList.toggle("active", idx === autocompleteIndex);
+    });
+  });
+
+  modalProject.addEventListener("change", () => {
+    if (milestoneAutocomplete.style.display !== "none") {
+      updateMilestoneSuggestions();
+    }
+  });
+
+  projectFilterEl.addEventListener("change", () => {
+    currentFilter = projectFilterEl.value;
+    render();
+  });
+
+  viewTabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      viewTabs.forEach(t=>t.classList.remove("active"));
+      tab.classList.add("active");
+      currentView = tab.dataset.view;
+      render();
+    });
+  });
+
+  addTaskBtn.addEventListener("click", () => openModal("add"));
+  modalCancel.addEventListener("click", closeModal);
+  modalBackdrop.addEventListener("click", (e) => { if (e.target===modalBackdrop) closeModal(); });
+  modalSave.addEventListener("click", saveTaskFromModal);
+  modalDelete.addEventListener("click", deleteTaskFromModal);
+
+  settingsFab.addEventListener("click", () => {
+    settingsPanel.style.display = settingsPanel.style.display === "none" ? "block" : "none";
+  });
+
+  titleFontSelect.addEventListener("change", () => {
+    settings.titleFont = titleFontSelect.value;
+    applySettings();
+  });
+  contentFontSelect.addEventListener("change", () => {
+    settings.contentFont = contentFontSelect.value;
+    applySettings();
+  });
+  themeSelect.addEventListener("change", () => {
+    settings.theme = themeSelect.value;
+    applySettings();
+  });
+
+  viewContainer.addEventListener("click", (e) => {
+    const item = e.target.closest(".task-item, .calendar-task-pill, .matrix-task, .overdue-task");
+    if (!item) return;
+    const taskId = item.getAttribute("data-task-id");
+    const projectId = item.getAttribute("data-project-id");
+    const milestoneId = item.getAttribute("data-milestone-id");
+    if (!taskId || !projectId || !milestoneId) return;
+
+    const project = projectsData.find(p=>p.id===projectId);
+    if (!project) return;
+    const milestone = project.milestones.find(m=>m.id===milestoneId);
+    if (!milestone) return;
+    const task = milestone.tasks.find(t=>t.id===taskId);
+    if (!task) return;
+
+    if (currentView==="list" && item.classList.contains("task-item")) {
+      const expanded = item.querySelector(".task-description-expanded");
+      if (expanded) {
+        expanded.remove();
+      } else {
+        const html = parseBulletJournal(task.description);
+        if (html) {
+          const div = document.createElement("div");
+          div.className = "task-description-expanded";
+          div.innerHTML = html;
+          item.appendChild(div);
+        }
+      }
+    } else {
+      openModal("edit",{projectId,milestoneId,taskId});
+    }
+  });
+
+  let draggedTaskRef = null;
+
+  viewContainer.addEventListener("dragstart", (e) => {
+    const pill = e.target.closest(".calendar-task-pill");
+    if (!pill) return;
+    const taskId = pill.getAttribute("data-task-id");
+    const projectId = pill.getAttribute("data-project-id");
+    const milestoneId = pill.getAttribute("data-milestone-id");
+    if (!taskId || !projectId || !milestoneId) return;
+    draggedTaskRef = { taskId, projectId, milestoneId };
+    e.dataTransfer.effectAllowed = "move";
+  });
+
+  viewContainer.addEventListener("dragover", (e) => {
+    if (!draggedTaskRef) return;
+    const cell = e.target.closest(".calendar-cell");
+    if (!cell) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  });
+
+  viewContainer.addEventListener("drop", (e) => {
+    if (!draggedTaskRef) return;
+    const cell = e.target.closest(".calendar-cell");
+    if (!cell) return;
+    e.preventDefault();
+    const newDate = cell.getAttribute("data-date");
+    if (!newDate) return;
+
+    const { taskId, projectId, milestoneId } = draggedTaskRef;
+    const project = projectsData.find(p=>p.id===projectId);
+    if (!project) return;
+    const milestone = project.milestones.find(m=>m.id===milestoneId);
+    if (!milestone) return;
+    const task = milestone.tasks.find(t=>t.id===taskId);
+    if (!task) return;
+
+    task.deadline = newDate;
+    saveProjects();
+    draggedTaskRef = null;
+    render();
+  });
+
+  viewContainer.addEventListener("dragend", () => {
+    draggedTaskRef = null;
+  });
+
+  applySettings();
+  loadProjects();
+  initSelectors();
+  render();
+</script>
+</body>
+</html>
