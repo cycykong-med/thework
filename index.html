@@ -663,6 +663,12 @@
         <label>Project</label>
         <select id="modalProject"></select>
       </div>
+          <div id="newProjectFields" style="display:none;">
+      <label>Project Name</label>
+      <input type="text" id="newProjectName" placeholder="e.g. PhD Research" />
+      <label>Project Emoji</label>
+      <input type="text" id="newProjectEmoji" placeholder="e.g. 🔬" maxlength="2" />
+    </div>
       <div style="flex:1;" class="autocomplete-container">
         <label>Milestone</label>
         <input type="text" id="modalMilestone" placeholder="e.g. Draft submission" autocomplete="off" />
@@ -930,6 +936,11 @@
     projectFilterEl.value = "all";
     modalProject.value = projectsData[0]?.id || "";
 
+      // Add "Create new project" option
+  const newProjOpt = document.createElement("option");
+  newProjOpt.value = "__new__";
+  newProjOpt.textContent = "➕ Create new project";
+  modalProject.appendChild(newProjOpt);
     const today = new Date();
     currentDateLabel.textContent = today.toLocaleDateString(undefined,{
       weekday:"short",year:"numeric",month:"short",day:"numeric"
@@ -1177,6 +1188,7 @@
     const project = projectsData.find(p=>p.id===projectId);
     if (!project) return;
     let milestone = project.milestones.find(m=>m.title===milestoneTitle);
+    
     if (!milestone) {
       milestone = { id:"m"+Date.now(), title:milestoneTitle, tasks:[] };
       project.milestones.push(milestone);
@@ -1323,6 +1335,15 @@
   projectFilterEl.addEventListener("change", () => {
     currentFilter = projectFilterEl.value;
     render();
+    
+modalProject.addEventListener("change", () => {
+  const newProjectFields = document.getElementById("newProjectFields");
+  if (modalProject.value === "__new__") {
+    newProjectFields.style.display = "block";
+  } else {
+    newProjectFields.style.display = "none";
+  }
+});
   });
 
   viewTabs.forEach(tab => {
