@@ -1177,13 +1177,32 @@
     hideAutocomplete();
   }
   function saveTaskFromModal() {
-    const projectId = modalProject.value;
+    let projectId = modalProject.value;
     const milestoneTitle = modalMilestone.value.trim() || "General";
     const title = modalTaskTitle.value.trim() || "Untitled task";
     const status = modalStatus.value;
-    const deadline = modalDeadline.value;
+    let deadline = modalDeadline.value;
     const importance = modalImportance.value;
     const description = modalDescription.value;
+
+      // Handle creating a new project
+      if (projectId === "__new__") {
+            const newProjectName = document.getElementById("newProjectName").value.trim();
+            const newProjectEmoji = document.getElementById("newProjectEmoji").value.trim() || "📁";
+            if (!newProjectName) {
+                    alert("Please enter a project name");
+                    return;
+                  }
+            const newProject = {
+                    id: "proj" + Date.now(),
+                    emoji: newProjectEmoji,
+                    name: newProjectName,
+                    milestones: []
+                          };
+            projectsData.push(newProject);
+            projectId = newProject.id; // Update projectId to the new project's ID
+            initSelectors(); // Refresh dropdown to include new project
+          }
 
     const project = projectsData.find(p=>p.id===projectId);
     if (!project) return;
