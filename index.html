@@ -716,14 +716,56 @@
 </div>
 
 <script>
-  // ---------- Data (will be filled from JSON + localStorage) ----------
-  const projectsData = [];
+  const projectsData = [
+    {
+      id: "proj1",
+      emoji: "🧬",
+      name: "Virology Thesis",
+      milestones: [
+        {
+          id: "m1",
+          title: "Lit Review",
+          tasks: [
+            {
+              id: "t1",
+              title: "Screen full-texts",
+              status: "To start",
+              deadline: "2026-02-25",
+              importance: "Critical",
+              description: "* Finish inclusion criteria\\n- Check supervisor comments\\no Meeting with PI on Friday\\n> Move non-critical papers"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      id: "proj2",
+      emoji: "⚖️",
+      name: "Competition Law Essay",
+      milestones: [
+        {
+          id: "m2",
+          title: "Outline",
+          tasks: [
+            {
+              id: "t2",
+              title: "Case list",
+              status: "To contact",
+              deadline: "2026-02-19",
+              importance: "High",
+              description: "* Confirm with supervisor\\n- Note missing citations"
+            }
+          ]
+        }
+      ]
+    }
+  ];
+
   const STORAGE_KEY = "cometPlannerProjects_v1";
 
   function saveProjects() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(projectsData)); } catch(e){}
   }
-
   function loadProjects() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -734,62 +776,6 @@
         parsed.forEach(p => projectsData.push(p));
       }
     } catch(e){}
-  }
-
-  // Load tasks JSON from GitHub and map into projectsData
-  async function loadTasksFromGitHubJSON() {
-    try {
-      const resp = await fetch('https://cycykong-med.github.io/thework/data/tasks.json');
-      if (!resp.ok) {
-        console.warn('tasks.json not found or error status:', resp.status);
-        return;
-      }
-      const json = await resp.json();
-      const tasks = Array.isArray(json.tasks) ? json.tasks : [];
-
-      projectsData.length = 0;
-
-      function getOrCreateProject(pId, emoji, name) {
-        let p = projectsData.find(pr => pr.id === pId);
-        if (!p) {
-          p = { id: pId, emoji, name, milestones: [] };
-          projectsData.push(p);
-        }
-        return p;
-      }
-
-      function getOrCreateMilestone(project, mId, title) {
-        let m = project.milestones.find(ms => ms.id === mId);
-        if (!m) {
-          m = { id: mId, title, tasks: [] };
-          project.milestones.push(m);
-        }
-        return m;
-      }
-
-      tasks.forEach(t => {
-        const project = getOrCreateProject(
-          t.projectId,
-          t.projectEmoji || "📁",
-          t.projectName || "Untitled project"
-        );
-        const milestone = getOrCreateMilestone(
-          project,
-          t.milestoneId || ("m-" + t.id),
-          t.milestoneTitle || "General"
-        );
-        milestone.tasks.push({
-          id: t.id,
-          title: t.title,
-          status: t.status,
-          deadline: t.deadline,
-          importance: t.importance,
-          description: t.description
-        });
-      });
-    } catch (e) {
-      console.error('Failed to load tasks.json', e);
-    }
   }
 
   const settings = {
@@ -840,7 +826,10 @@
       else if (first === ">") { prefix = '<span class="bu-prefix">▶️</span>'; }
       else if (first === "-") { prefix = '<span class="bu-prefix">➖</span>'; }
       else if (first === "o" || first === "O") { prefix = '<span class="bu-prefix">⭕</span>'; }
-      else { content = trimmed; prefix = ""; }
+      else {
+        content = trimmed;
+        prefix = "";
+      }
 
       if (!content) content = trimmed;
       return '<li class="bu-item">' + prefix + content + '</li>';
@@ -892,397 +881,566 @@
     return d.toLocaleDateString(undefined,{month:"short",day:"numeric"});
   }
 
-  // … keep all your existing DOM/querySelector/render/openModal/etc code unchanged …
+  const projectFilterEl = document.getElementById("projectFilter");
+  const currentDateLabel = document.getElementById("currentDateLabel");
+  const viewContainer = document.getElementById("viewContainer");
+  const viewTabs = Array.from(document.querySelectorAll(".view-tab"));
+  const addTaskBtn = document.getElementById("addTaskBtn");
+  const settingsFab = document.getElementById("settingsFab");
+  const settingsPanel = document.getElementById("settingsPanel");
 
-  // At the very bottom of the script, replace:
-  // applySettings();
-  // loadProjects();
-  // initSelectors();
-  // render();
-  // with:
+  const modalBackdrop = document.getElementById("modalBackdrop");
+  const modalProject = document.getElementById("modalProject");
+  const modalMilestone = document.getElementById("modalMilestone");
+  const milestoneAutocomplete = document.getElementById("milestoneAutocomplete");
+  const modalTaskTitle = document.getElementById("modalTaskTitle");
+  const modalStatus = document.getElementById("modalStatus");
+  const modalDeadline = document.getElementById("modalDeadline");
+  const modalImportance = document.getElementById("modalImportance");
+  const modalDescription = document.getElementById("modalDescription");
+  const modalCancel = document.getElementById("modalCancel");
+  const modalSave = document.getElementById("modalSave");
+  const modalDelete = document.getElementById("modalDelete");
+  const modalTitleHeader = document.getElementById("modalTitleHeader");
 
-    // ---------- DOM references ----------
-  const $projectFilter = document.getElementById('projectFilter');
-  const $viewTabs = document.getElementById('viewTabs');
-  const $viewContainer = document.getElementById('viewContainer');
-  const $addTaskBtn = document.getElementById('addTaskBtn');
-  const $settingsFab = document.getElementById('settingsFab');
-  const $settingsPanel = document.getElementById('settingsPanel');
-  const $modalBackdrop = document.getElementById('modalBackdrop');
-  const $modalTitleHeader = document.getElementById('modalTitleHeader');
-  const $modalProject = document.getElementById('modalProject');
-  const $modalMilestone = document.getElementById('modalMilestone');
-  const $modalTaskTitle = document.getElementById('modalTaskTitle');
-  const $modalStatus = document.getElementById('modalStatus');
-  const $modalDeadline = document.getElementById('modalDeadline');
-  const $modalImportance = document.getElementById('modalImportance');
-  const $modalDescription = document.getElementById('modalDescription');
-  const $currentDateLabel = document.getElementById('currentDateLabel');
-  const $themeSelect = document.getElementById('themeSelect');
-  const $titleFontSelect = document.getElementById('titleFontSelect');
-  const $contentFontSelect = document.getElementById('contentFontSelect');
+  const titleFontSelect = document.getElementById("titleFontSelect");
+  const contentFontSelect = document.getElementById("contentFontSelect");
+  const themeSelect = document.getElementById("themeSelect");
 
-  let currentView = 'list';
-  let filterProjectId = 'all';
-  let editingTaskId = null;
+  let currentView = "list";
+  let currentFilter = "all";
+  let editingTaskRef = null;
+  let autocompleteIndex = -1;
 
-  // ---------- Initialize selectors and events ----------
   function initSelectors() {
-    // Project filter
-    $projectFilter.innerHTML = '<option value="all">All projects</option>';
+    projectFilterEl.innerHTML = "";
+    const allOpt = document.createElement("option");
+    allOpt.value = "all";
+    allOpt.textContent = "All projects";
+    projectFilterEl.appendChild(allOpt);
     projectsData.forEach(p => {
-      const opt = document.createElement('option');
+      const opt = document.createElement("option");
       opt.value = p.id;
-      opt.textContent = `${p.emoji} ${p.name}`;
-      $projectFilter.appendChild(opt);
-    });
-    $projectFilter.addEventListener('change', e => {
-      filterProjectId = e.target.value;
-      render();
-    });
+      opt.textContent = p.emoji + " " + p.name;
+      projectFilterEl.appendChild(opt);
 
-    // View tabs
-    $viewTabs.querySelectorAll('.view-tab').forEach(btn => {
-      btn.addEventListener('click', e => {
-        currentView = btn.getAttribute('data-view');
-        $viewTabs.querySelectorAll('.view-tab').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        render();
-      });
+      const optModal = opt.cloneNode(true);
+      modalProject.appendChild(optModal);
     });
+    projectFilterEl.value = "all";
+    modalProject.value = projectsData[0]?.id || "";
 
-    // Add task button
-    $addTaskBtn.addEventListener('click', () => {
-      editingTaskId = null;
-      openModal();
-    });
-
-    // Settings FAB
-    $settingsFab.addEventListener('click', () => {
-      const isHidden = $settingsPanel.style.display === 'none' || !$settingsPanel.style.display;
-      $settingsPanel.style.display = isHidden ? 'block' : 'none';
-    });
-
-    // Theme select
-    $themeSelect.value = settings.theme;
-    $themeSelect.addEventListener('change', e => {
-      settings.theme = e.target.value;
-      applySettings();
-      try { localStorage.setItem('cometPlannerSettings', JSON.stringify(settings)); } catch(e){}
-    });
-
-    // Font selects
-    $titleFontSelect.value = settings.titleFont;
-    $titleFontSelect.addEventListener('change', e => {
-      settings.titleFont = e.target.value;
-      applySettings();
-      try { localStorage.setItem('cometPlannerSettings', JSON.stringify(settings)); } catch(e){}
-    });
-    $contentFontSelect.value = settings.contentFont;
-    $contentFontSelect.addEventListener('change', e => {
-      settings.contentFont = e.target.value;
-      applySettings();
-      try { localStorage.setItem('cometPlannerSettings', JSON.stringify(settings)); } catch(e){}
-    });
-
-    // Modal project change
-    $modalProject.addEventListener('change', updateMilestoneAutocomplete);
-
-    // Modal backdrop close
-    $modalBackdrop.addEventListener('click', e => {
-      if (e.target === $modalBackdrop) closeModal();
-    });
-
-    // Current date label
     const today = new Date();
-    $currentDateLabel.textContent = today.toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric'});
-  }
-
-  function updateMilestoneAutocomplete() {
-    const selectedProjId = $modalProject.value;
-    const project = projectsData.find(p => p.id === selectedProjId);
-    if (!project) return;
-    // For simplicity, we won't add full autocomplete UI here
-  }
-
-  // ---------- Render main view ----------
-  function render() {
-    if (currentView === 'list') renderListView();
-    else if (currentView === 'calendar') renderCalendarView();
-    else if (currentView === 'matrix') renderMatrixView();
-  }
-
-  function renderListView() {
-    let tasks = flattenTasks(projectsData);
-    if (filterProjectId !== 'all') {
-      tasks = tasks.filter(t => t.projectId === filterProjectId);
-    }
-    tasks = tasks.filter(t => t.status !== 'Complete');
-    tasks.sort((a,b) => {
-      const dA = parseDateSafe(a.deadline);
-      const dB = parseDateSafe(b.deadline);
-      if (!dA && !dB) return 0;
-      if (!dA) return 1;
-      if (!dB) return -1;
-      return dA - dB;
+    currentDateLabel.textContent = today.toLocaleDateString(undefined,{
+      weekday:"short",year:"numeric",month:"short",day:"numeric"
     });
+  }
 
-    const overdue = tasks.filter(isOverdue);
-    const upcoming = tasks.filter(t => !isOverdue(t));
+  function getFilteredProjects() {
+    if (currentFilter === "all") return projectsData;
+    return projectsData.filter(p => p.id === currentFilter);
+  }
+
+  function render() {
+    const filtered = getFilteredProjects();
+    if (!filtered.length) { viewContainer.innerHTML = ""; return; }
+    if (currentView === "list") renderListView(filtered);
+    else if (currentView === "calendar") renderCalendarView(filtered);
+    else renderMatrixView(filtered);
+  }
+
+  function renderListView(projects) {
+    const tasks = flattenTasks(projects);
+    tasks.sort((a, b) => {
+      const da = parseDateSafe(a.deadline);
+      const db = parseDateSafe(b.deadline);
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return da - db;
+    });
 
     let html = '<div class="card"><div class="task-list">';
-    upcoming.forEach(t => {
-      const impClass = getImportanceClass(t.importance);
-      const dotClass = getImportanceDotClass(t.importance);
-      html += `<div class="task-item ${impClass}" onclick="openTaskDetail('${t.id}')">
-        <div class="task-header">
-          <div class="task-title">
-            <span>${t.projectEmoji}</span>
-            <span>${t.title}</span>
-          </div>
-          <div class="task-meta">
-            <span class="badge">${t.status}</span>
-            ${t.deadline ? `<span class="badge">${formatDateShort(t.deadline)}</span>` : ''}
-            <div class="importance-dot ${dotClass}"></div>
-          </div>
-        </div>
-      </div>`;
-    });
-    html += '</div>';
-
-    if (overdue.length > 0) {
-      html += '<div class="overdue-box"><div class="overdue-title">⚠️ Overdue</div>';
-      overdue.forEach(t => {
-        html += `<div class="overdue-task ${getImportanceClass(t.importance)}" onclick="openTaskDetail('${t.id}')">
-          <span>${t.projectEmoji}</span>
-          <span>${t.title}</span>
-          <span class="badge">${formatDateShort(t.deadline)}</span>
-        </div>`;
-      });
-      html += '</div>';
-    }
-    html += '</div>';
-    $viewContainer.innerHTML = html;
-  }
-
-function renderCalendarView(projects) {
-    let projects = projectsData;
-  if (filterProjectId !== 'all') {
-    projects = projectsData.filter(p => p.id === filterProjectId);
-  }
-  const tasks = flattenTasks(projects);
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.() {
-  const first = new Date(year,month,1);
-  const offset = first.getDay();
-  const daysInMonth = new Date(year,month+1,0).getDate();
-  const cells = [];
-  for (let i=0;i<offset;i++) cells.push(null);
-  for (let d=1;d<=daysInMonth;d++) cells.push(d);
-  const byDay = {};
-  tasks.forEach(task => {
-    const d = parseDateSafe(task.deadline);
-    if (!d || d.getFullYear()!==year || d.getMonth()!==month) return;
-    const day = d.getDate();
-    if (!byDay[day]) byDay[day] = [];
-    byDay[day].push(task);
-  });
-  let title = filterProjectId==="all" ? "All projects" : "";  if (currentFilter!=="all") {
-  if (filterProjectId!=="all") {
-    const p = projectsData.find(p=>p.id===filterProjectId);
-    if (p) title = p.emoji+" "+p.name;
-  }  let html = '<div class="card">';
-  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:0.8rem;">';
-  html += '<div><strong>'+title+'</strong></div>';
-  html += '<div style="color:var(--text-muted);">'+today.toLocaleDateString(undefined,{month:"long",year:"numeric"})+'</div>';
-  html += '</div><div class="calendar-grid">';
-  ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d => {
-    html += '<div class="calendar-day-header">'+d+'</div>';
-  });
-  cells.forEach(day => {
-    if (day===null) {
-      html += '<div class="calendar-cell"></div>';
+    if (!tasks.length) {
+      html += '<div style="font-size:0.8rem;color:var(--text-muted);">No tasks yet. Use the + button to add one.</div>';
     } else {
-      const list = byDay[day] || [];
-      const dateStr = new Date(year, month, day).toISOString().slice(0,10);
-      html += '<div class="calendar-cell" data-date="'+dateStr+'">';
-      html += '<div class="calendar-date">'+day+'</div>';
-      list.forEach(task => {
-        const bgClass = getImportanceClass(task.importance);
-        const completedClass = task.status === "Complete" ? "completed-text" : "";
-        html += '<div class="calendar-task-pill '+bgClass+'" draggable="true" data-task-id="'+task.id+'" data-project-id="'+task.projectId+'" data-milestone-id="'+task.milestoneId+'">';
-        html += '<span class="'+completedClass+'">'+task.projectEmoji+' '+task.title+'</span>';
+      const byProject = {};
+      tasks.forEach(t => {
+        if (!byProject[t.projectId]) byProject[t.projectId] = { emoji:t.projectEmoji, name:t.projectName, milestones:{} };
+        const g = byProject[t.projectId];
+        if (!g.milestones[t.milestoneId]) g.milestones[t.milestoneId] = { title:t.milestoneTitle, tasks:[] };
+        g.milestones[t.milestoneId].tasks.push(t);
+      });
+
+      Object.values(byProject).forEach(p => {
+        html += '<div style="margin-bottom:10px;">';
+        html += '<div style="font-size:0.85rem;font-weight:600;margin-bottom:4px;color:var(--text-muted);">'
+             + p.emoji + " " + p.name + "</div>";
+        Object.values(p.milestones).forEach(m => {
+          html += '<div style="margin-bottom:6px;">';
+          html += '<div style="font-size:0.8rem;font-weight:600;margin-bottom:2px;color:var(--text-muted);">'
+               + p.emoji + " Milestone: " + m.title + "</div>";
+          m.tasks.forEach(task => {
+            const impClass = getImportanceClass(task.importance);
+            const completedClass = task.status === "Complete" ? "completed-text" : "";
+            html += '<div class="task-item '+impClass+'" data-task-id="'+task.id+'" data-project-id="'+task.projectId+'" data-milestone-id="'+task.milestoneId+'">';
+            html += '  <div class="task-header">';
+            html += '    <div class="task-title '+completedClass+'"><span>'+task.projectEmoji+'</span><span>'+task.title+'</span></div>';
+            html += '    <div class="task-meta">';
+            html += '      <span class="badge status-pill status-'+task.status.replace(/\s/g,"\\ ")+'">'+task.status+'</span>';
+            html += '      <span class="badge">'+task.importance+'</span>';
+            html += '      <span>'+formatDateShort(task.deadline)+'</span>';
+            html += '    </div>';
+            html += '  </div>';
+            html += '</div>';
+          });
+          html += '</div>';
+        });
         html += '</div>';
       });
-      html += '</div>';
     }
-  });
-  html += '</div></div>';
-  $viewContainerinnerHTML = html;
-}
-  function renderMatrixView() {
-    let tasks = flattenTasks(projectsData);
-    if (filterProjectId !== 'all') {
-      tasks = tasks.filter(t => t.projectId === filterProjectId);
-    }
-    tasks = tasks.filter(t => t.status !== 'Complete');
-
-    const urgentImportant = tasks.filter(t => isUrgent(t) && isImportant(t));
-    const urgentNotImportant = tasks.filter(t => isUrgent(t) && !isImportant(t));
-    const notUrgentImportant = tasks.filter(t => !isUrgent(t) && isImportant(t));
-    const notUrgentNotImportant = tasks.filter(t => !isUrgent(t) && !isImportant(t));
-
-    let html = '<div class="matrix-grid">';
-    html += renderMatrixCell('Do First (Urgent + Important)', urgentImportant);
-    html += renderMatrixCell('Schedule (Not Urgent + Important)', notUrgentImportant);
-    html += renderMatrixCell('Delegate (Urgent + Not Important)', urgentNotImportant);
-    html += renderMatrixCell('Eliminate (Not Urgent + Not Important)', notUrgentNotImportant);
-    html += '</div>';
-    $viewContainer.innerHTML = html;
+    html += '</div></div>';
+    viewContainer.innerHTML = html;
   }
 
-  function renderMatrixCell(title, tasks) {
-    let html = `<div class="matrix-cell"><div class="matrix-title">${title}</div>`;
-    tasks.forEach(t => {
-      const dotClass = getImportanceDotClass(t.importance);
-      html += `<div class="matrix-task ${getImportanceClass(t.importance)}" onclick="openTaskDetail('${t.id}')">
-        <span>${t.projectEmoji}</span>
-        <span>${t.title}</span>
-        <div class="importance-dot ${dotClass}"></div>
-      </div>`;
+  function renderCalendarView(projects) {
+    const tasks = flattenTasks(projects);
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const first = new Date(year,month,1);
+    const offset = first.getDay();
+    const daysInMonth = new Date(year,month+1,0).getDate();
+    const cells = [];
+    for (let i=0;i<offset;i++) cells.push(null);
+    for (let d=1;d<=daysInMonth;d++) cells.push(d);
+    const byDay = {};
+    tasks.forEach(task => {
+      const d = parseDateSafe(task.deadline);
+      if (!d || d.getFullYear()!==year || d.getMonth()!==month) return;
+      const day = d.getDate();
+      if (!byDay[day]) byDay[day] = [];
+      byDay[day].push(task);
     });
-    html += '</div>';
-    return html;
-  }
 
-  window.openTaskDetail = function(taskId) {
-    const task = flattenTasks(projectsData).find(t => t.id === taskId);
-    if (!task) return;
-    editingTaskId = taskId;
-    openModal(task);
-  };
-
-  // ---------- Modal ----------
-  function openModal(task = null) {
-    if (task) {
-      $modalTitleHeader.textContent = 'Edit Task';
-      $modalTaskTitle.value = task.title;
-      $modalStatus.value = task.status;
-      $modalDeadline.value = task.deadline || '';
-      $modalImportance.value = task.importance;
-      $modalDescription.value = task.description || '';
-      $modalProject.value = task.projectId;
-      $modalMilestone.value = task.milestoneTitle;
-    } else {
-      $modalTitleHeader.textContent = 'Add Task';
-      $modalTaskTitle.value = '';
-      $modalStatus.value = 'To start';
-      $modalDeadline.value = '';
-      $modalImportance.value = 'Normal';
-      $modalDescription.value = '';
-      $modalProject.innerHTML = '';
-      projectsData.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.id;
-        opt.textContent = `${p.emoji} ${p.name}`;
-        $modalProject.appendChild(opt);
-      });
-      if (projectsData.length > 0) $modalProject.value = projectsData[0].id;
-      $modalMilestone.value = '';
+    let title = currentFilter==="all" ? "All projects" : "";
+    if (currentFilter!=="all") {
+      const p = projectsData.find(p=>p.id===currentFilter);
+      if (p) title = p.emoji+" "+p.name;
     }
-    $modalBackdrop.style.display = 'flex';
-  }
 
-  function closeModal() {
-    $modalBackdrop.style.display = 'none';
-    editingTaskId = null;
-  }
-
-  // Modal save button
-  const $modalSaveBtn = document.querySelector('.modal button.primary');
-  if ($modalSaveBtn) {
-    $modalSaveBtn.addEventListener('click', () => {
-      const projId = $modalProject.value;
-      const milestoneTitle = $modalMilestone.value.trim() || 'General';
-      const title = $modalTaskTitle.value.trim();
-      if (!title) { alert('Please enter a task title'); return; }
-      
-      const project = projectsData.find(p => p.id === projId);
-      if (!project) { alert('Project not found'); return; }
-      
-      let milestone = project.milestones.find(m => m.title === milestoneTitle);
-      if (!milestone) {
-        milestone = { id: 'm-' + Date.now(), title: milestoneTitle, tasks: [] };
-        project.milestones.push(milestone);
-      }
-      
-      if (editingTaskId) {
-        const task = milestone.tasks.find(t => t.id === editingTaskId);
-        if (task) {
-          task.title = title;
-          task.status = $modalStatus.value;
-          task.deadline = $modalDeadline.value;
-          task.importance = $modalImportance.value;
-          task.description = $modalDescription.value;
-        }
+    let html = '<div class="card">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:0.8rem;">';
+    html += '<div><strong>'+title+'</strong></div>';
+    html += '<div style="color:var(--text-muted);">'+today.toLocaleDateString(undefined,{month:"long",year:"numeric"})+'</div>';
+    html += '</div><div class="calendar-grid">';
+    ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d => {
+      html += '<div class="calendar-day-header">'+d+'</div>';
+    });
+    cells.forEach(day => {
+      if (day===null) {
+        html += '<div class="calendar-cell"></div>';
       } else {
-        milestone.tasks.push({
-          id: 't-' + Date.now(),
-          title,
-          status: $modalStatus.value,
-          deadline: $modalDeadline.value,
-          importance: $modalImportance.value,
-          description: $modalDescription.value
+        const list = byDay[day] || [];
+        const dateStr = new Date(year, month, day).toISOString().slice(0,10);
+        html += '<div class="calendar-cell" data-date="'+dateStr+'"><div class="calendar-date">'+day+'</div>';
+        list.forEach(task => {
+          const bgClass = getImportanceClass(task.importance);
+          const completedClass = task.status === "Complete" ? "completed-text" : "";
+          html += '<div class="calendar-task-pill '+bgClass+'" draggable="true" data-task-id="'+task.id+'" data-project-id="'+task.projectId+'" data-milestone-id="'+task.milestoneId+'">';
+          html += '<span class="'+completedClass+'">'+task.projectEmoji+' '+task.title+'</span>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+    });
+    html += '</div></div>';
+    viewContainer.innerHTML = html;
+  }
+
+  function renderMatrixView(projects) {
+    const allTasks = flattenTasks(projects);
+    const activeTasks = allTasks.filter(t => t.status !== "Complete");
+    const quadrants = { UI:[], UNI:[], NUI:[], NUNI:[] };
+    const overdue = [];
+
+    activeTasks.forEach(task => {
+      if (isOverdue(task)) {
+        overdue.push(task);
+        return;
+      }
+      const urgent = isUrgent(task);
+      const important = isImportant(task);
+      let key;
+      if (urgent && important) key="UI";
+      else if (urgent && !important) key="UNI";
+      else if (!urgent && important) key="NUI";
+      else key="NUNI";
+      quadrants[key].push(task);
+    });
+
+    const label = {
+      UI:"Urgent & Important",
+      UNI:"Urgent & Not Important",
+      NUI:"Not Urgent & Important",
+      NUNI:"Not Urgent & Not Important"
+    };
+
+    let html = '<div class="card"><div class="matrix-grid">';
+    ["UNI","UI","NUNI","NUI"].forEach(key => {
+      const list = quadrants[key];
+      html += '<div class="matrix-cell"><div class="matrix-title">'+label[key]+'</div>';
+      if (!list.length) {
+        html += '<div style="font-size:0.7rem;color:var(--text-muted);">No tasks.</div>';
+      } else {
+        list.forEach(task => {
+          const dotClass = getImportanceDotClass(task.importance);
+          const bgClass = getImportanceClass(task.importance);
+          html += '<div class="matrix-task '+bgClass+'" data-task-id="'+task.id+'" data-project-id="'+task.projectId+'" data-milestone-id="'+task.milestoneId+'">';
+          html += '<span>'+task.projectEmoji+'</span>';
+          html += '<span class="importance-dot '+dotClass+'"></span>';
+          html += '<span>'+task.title+'</span>';
+          html += '<span style="margin-left:auto;font-size:0.65rem;">'+formatDateShort(task.deadline)+'</span>';
+          html += '</div>';
         });
       }
-      
-      saveProjects();
-      render();
-      closeModal();
+      html += '</div>';
     });
-  }
+    html += '</div>';
 
-  // Modal cancel button
-  const $modalCancelBtn = document.querySelector('.modal-actions button:not(.primary)');
-  if ($modalCancelBtn) {
-    $modalCancelBtn.addEventListener('click', closeModal);
-  }
-
-  // Modal delete button
-  const $modalDeleteBtn = document.querySelector('.modal button:first-child');
-  if ($modalDeleteBtn && $modalDeleteBtn.textContent.includes('Delete')) {
-    $modalDeleteBtn.addEventListener('click', () => {
-      if (!editingTaskId) return;
-      if (!confirm('Delete this task?')) return;
-      projectsData.forEach(p => {
-        p.milestones.forEach(m => {
-          m.tasks = m.tasks.filter(t => t.id !== editingTaskId);
-        });
+    html += '<div class="overdue-box">';
+    html += '<div class="overdue-title">Overdue</div>';
+    if (!overdue.length) {
+      html += '<div style="font-size:0.7rem;color:var(--text-muted);">No overdue tasks.</div>';
+    } else {
+      overdue.forEach(task => {
+        const bgClass = getImportanceClass(task.importance);
+        html += '<div class="overdue-task '+bgClass+'" data-task-id="'+task.id+'" data-project-id="'+task.projectId+'" data-milestone-id="'+task.milestoneId+'">';
+        html += '<span>'+task.projectEmoji+'</span>';
+        html += '<span>'+task.title+'</span>';
+        html += '<span style="margin-left:auto;">'+formatDateShort(task.deadline)+'</span>';
+        html += '</div>';
       });
-      saveProjects();
-      render();
-      closeModal();
-    });
+    }
+    html += '</div></div>';
+
+    viewContainer.innerHTML = html;
   }
 
+  function openModal(mode, ref) {
+    modalBackdrop.style.display = "flex";
+    hideAutocomplete();
+    if (mode==="edit" && ref) {
+      const {projectId,milestoneId,taskId} = ref;
+      const project = projectsData.find(p=>p.id===projectId);
+      if (!project) return;
+      const milestone = project.milestones.find(m=>m.id===milestoneId);
+      if (!milestone) return;
+      const task = milestone.tasks.find(t=>t.id===taskId);
+      if (!task) return;
+      editingTaskRef = ref;
+      modalTitleHeader.textContent = "Edit Task";
+      modalProject.value = projectId;
+      modalMilestone.value = milestone.title;
+      modalTaskTitle.value = task.title;
+      modalStatus.value = task.status;
+      modalDeadline.value = task.deadline || "";
+      modalImportance.value = task.importance;
+      modalDescription.value = task.description || "";
+      modalDelete.style.display = "inline-block";
+    } else {
+      editingTaskRef = null;
+      modalTitleHeader.textContent = "Add Task";
+      modalProject.value = projectsData[0]?.id || "";
+      modalMilestone.value = "";
+      modalTaskTitle.value = "";
+      modalStatus.value = "To start";
+      modalDeadline.valueAsDate = new Date();
+      modalImportance.value = "Normal";
+      modalDescription.value = "";
+      modalDelete.style.display = "none";
+    }
+  }
+  function closeModal() {
+    modalBackdrop.style.display = "none";
+    hideAutocomplete();
+  }
+  function saveTaskFromModal() {
+    const projectId = modalProject.value;
+    const milestoneTitle = modalMilestone.value.trim() || "General";
+    const title = modalTaskTitle.value.trim() || "Untitled task";
+    const status = modalStatus.value;
+    const deadline = modalDeadline.value;
+    const importance = modalImportance.value;
+    const description = modalDescription.value;
 
-
-  async function startApp() {
-    applySettings();
-
-    // First try localStorage; if empty, seed from GitHub JSON
-    loadProjects();
-    if (projectsData.length === 0) {
-      await loadTasksFromGitHubJSON();
+    const project = projectsData.find(p=>p.id===projectId);
+    if (!project) return;
+    let milestone = project.milestones.find(m=>m.title===milestoneTitle);
+    if (!milestone) {
+      milestone = { id:"m"+Date.now(), title:milestoneTitle, tasks:[] };
+      project.milestones.push(milestone);
     }
 
-    initSelectors();
+    if (editingTaskRef) {
+      const {milestoneId,taskId} = editingTaskRef;
+      const ms = project.milestones.find(m=>m.id===milestoneId) || milestone;
+      const task = ms.tasks.find(t=>t.id===taskId);
+      if (task) {
+        task.title = title;
+        task.status = status;
+        task.deadline = deadline;
+        task.importance = importance;
+        task.description = description;
+      }
+    } else {
+      milestone.tasks.push({
+        id: "t"+Date.now(),
+        title, status, deadline, importance, description
+      });
+    }
+
+    // Only change filter when adding from List view and current filter is "all"
+    if (!editingTaskRef && currentView === "list" && currentFilter === "all") {
+      currentFilter = projectId === "all" ? "all" : projectId;
+      projectFilterEl.value = currentFilter;
+    }
+
+    saveProjects();
+    closeModal();
+    render();
+  }
+  function deleteTaskFromModal() {
+    if (!editingTaskRef) return;
+    const {projectId,milestoneId,taskId} = editingTaskRef;
+    const project = projectsData.find(p=>p.id===projectId);
+    if (!project) return;
+    const milestone = project.milestones.find(m=>m.id===milestoneId);
+    if (!milestone) return;
+    milestone.tasks = milestone.tasks.filter(t=>t.id!==taskId);
+    saveProjects();
+    closeModal();
     render();
   }
 
-  startApp();
-</script>
+  function getMilestonesForProject(projectId) {
+    const project = projectsData.find(p=>p.id===projectId);
+    if (!project) return [];
+    const titles = new Set();
+    project.milestones.forEach(m => titles.add(m.title));
+    return Array.from(titles);
+  }
 
+  function updateMilestoneSuggestions() {
+    const projectId = modalProject.value;
+    const allMilestones = getMilestonesForProject(projectId);
+    const query = modalMilestone.value.trim().toLowerCase();
+    const suggestions = query
+      ? allMilestones.filter(t => t.toLowerCase().includes(query))
+      : allMilestones;
+
+    milestoneAutocomplete.innerHTML = "";
+    if (!suggestions.length) {
+      hideAutocomplete();
+      return;
+    }
+    suggestions.forEach((title, idx) => {
+      const div = document.createElement("div");
+      div.className = "autocomplete-item" + (idx===0 ? " active" : "");
+      div.textContent = title;
+      div.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        modalMilestone.value = title;
+        hideAutocomplete();
+      });
+      milestoneAutocomplete.appendChild(div);
+    });
+    autocompleteIndex = 0;
+    milestoneAutocomplete.style.display = "block";
+  }
+
+  function hideAutocomplete() {
+    milestoneAutocomplete.style.display = "none";
+    milestoneAutocomplete.innerHTML = "";
+    autocompleteIndex = -1;
+  }
+
+  modalMilestone.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      updateMilestoneSuggestions();
+    }
+  });
+
+  modalMilestone.addEventListener("input", () => {
+    if (milestoneAutocomplete.style.display !== "none") {
+      updateMilestoneSuggestions();
+    }
+  });
+
+  modalMilestone.addEventListener("keydown", (e) => {
+    if (milestoneAutocomplete.style.display === "none") return;
+
+    const items = Array.from(milestoneAutocomplete.querySelectorAll(".autocomplete-item"));
+    if (!items.length) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      autocompleteIndex = (autocompleteIndex + 1) % items.length;
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      autocompleteIndex = (autocompleteIndex - 1 + items.length) % items.length;
+    } else if (e.key === "Tab") {
+      e.preventDefault();
+      const chosen = items[autocompleteIndex] || items[0];
+      if (chosen) modalMilestone.value = chosen.textContent;
+      hideAutocomplete();
+      return;
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const chosen = items[autocompleteIndex] || items[0];
+      if (chosen) modalMilestone.value = chosen.textContent;
+      hideAutocomplete();
+      return;
+    } else if (e.key === "Escape") {
+      hideAutocomplete();
+      return;
+    } else {
+      return;
+    }
+
+    items.forEach((item, idx) => {
+      item.classList.toggle("active", idx === autocompleteIndex);
+    });
+  });
+
+  modalProject.addEventListener("change", () => {
+    if (milestoneAutocomplete.style.display !== "none") {
+      updateMilestoneSuggestions();
+    }
+  });
+
+  projectFilterEl.addEventListener("change", () => {
+    currentFilter = projectFilterEl.value;
+    render();
+  });
+
+  viewTabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      viewTabs.forEach(t=>t.classList.remove("active"));
+      tab.classList.add("active");
+      currentView = tab.dataset.view;
+      render();
+    });
+  });
+
+  addTaskBtn.addEventListener("click", () => openModal("add"));
+  modalCancel.addEventListener("click", closeModal);
+  modalBackdrop.addEventListener("click", (e) => { if (e.target===modalBackdrop) closeModal(); });
+  modalSave.addEventListener("click", saveTaskFromModal);
+  modalDelete.addEventListener("click", deleteTaskFromModal);
+
+  settingsFab.addEventListener("click", () => {
+    settingsPanel.style.display = settingsPanel.style.display === "none" ? "block" : "none";
+  });
+
+  titleFontSelect.addEventListener("change", () => {
+    settings.titleFont = titleFontSelect.value;
+    applySettings();
+  });
+  contentFontSelect.addEventListener("change", () => {
+    settings.contentFont = contentFontSelect.value;
+    applySettings();
+  });
+  themeSelect.addEventListener("change", () => {
+    settings.theme = themeSelect.value;
+    applySettings();
+  });
+
+  viewContainer.addEventListener("click", (e) => {
+    const item = e.target.closest(".task-item, .calendar-task-pill, .matrix-task, .overdue-task");
+    if (!item) return;
+    const taskId = item.getAttribute("data-task-id");
+    const projectId = item.getAttribute("data-project-id");
+    const milestoneId = item.getAttribute("data-milestone-id");
+    if (!taskId || !projectId || !milestoneId) return;
+
+    const project = projectsData.find(p=>p.id===projectId);
+    if (!project) return;
+    const milestone = project.milestones.find(m=>m.id===milestoneId);
+    if (!milestone) return;
+    const task = milestone.tasks.find(t=>t.id===taskId);
+    if (!task) return;
+
+    if (currentView==="list" && item.classList.contains("task-item")) {
+      const expanded = item.querySelector(".task-description-expanded");
+      if (expanded) {
+        expanded.remove();
+      } else {
+        const html = parseBulletJournal(task.description);
+        if (html) {
+          const div = document.createElement("div");
+          div.className = "task-description-expanded";
+          div.innerHTML = html;
+          item.appendChild(div);
+        }
+      }
+    } else {
+      openModal("edit",{projectId,milestoneId,taskId});
+    }
+  });
+
+  let draggedTaskRef = null;
+
+  viewContainer.addEventListener("dragstart", (e) => {
+    const pill = e.target.closest(".calendar-task-pill");
+    if (!pill) return;
+    const taskId = pill.getAttribute("data-task-id");
+    const projectId = pill.getAttribute("data-project-id");
+    const milestoneId = pill.getAttribute("data-milestone-id");
+    if (!taskId || !projectId || !milestoneId) return;
+    draggedTaskRef = { taskId, projectId, milestoneId };
+    e.dataTransfer.effectAllowed = "move";
+  });
+
+  viewContainer.addEventListener("dragover", (e) => {
+    if (!draggedTaskRef) return;
+    const cell = e.target.closest(".calendar-cell");
+    if (!cell) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  });
+
+  viewContainer.addEventListener("drop", (e) => {
+    if (!draggedTaskRef) return;
+    const cell = e.target.closest(".calendar-cell");
+    if (!cell) return;
+    e.preventDefault();
+    const newDate = cell.getAttribute("data-date");
+    if (!newDate) return;
+
+    const { taskId, projectId, milestoneId } = draggedTaskRef;
+    const project = projectsData.find(p=>p.id===projectId);
+    if (!project) return;
+    const milestone = project.milestones.find(m=>m.id===milestoneId);
+    if (!milestone) return;
+    const task = milestone.tasks.find(t=>t.id===taskId);
+    if (!task) return;
+
+    task.deadline = newDate;
+    saveProjects();
+    draggedTaskRef = null;
+    render();
+  });
+
+  viewContainer.addEventListener("dragend", () => {
+    draggedTaskRef = null;
+  });
+
+  applySettings();
+  loadProjects();
+  initSelectors();
+  render();
+</script>
 </body>
 </html>
