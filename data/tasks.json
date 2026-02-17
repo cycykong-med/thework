@@ -1,0 +1,30 @@
+{
+  "tasks": [
+    {
+      "id": "t1",
+      "projectId": "proj1",
+      "projectEmoji": "🧬",
+      "projectName": "Virology Thesis",
+      "milestoneId": "m1",
+      "milestoneTitle": "Lit Review",
+      "title": "Screen full-texts",
+      "status": "To start",
+      "deadline": "2026-02-25",
+      "importance": "Critical",
+      "description": "* Finish inclusion criteria\n- Check supervisor comments"
+    },
+    {
+      "id": "t2",
+      "projectId": "proj2",
+      "projectEmoji": "⚖️",
+      "projectName": "Competition Law Essay",
+      "milestoneId": "m2",
+      "milestoneTitle": "Outline",
+      "title": "Case list",
+      "status": "To contact",
+      "deadline": "2026-02-19",
+      "importance": "High",
+      "description": "* Confirm with supervisor\n- Note missing citations"
+    }
+  ]
+}
