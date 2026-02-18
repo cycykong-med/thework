@@ -793,6 +793,93 @@
     } catch(e){}
   }
 
+   // Project Management Functions
+function openProjectsModal() {
+  
+  document.getElementById('projectsBackdrop').style.display = 'flex';
+}
+
+function closeProjectsModal() {
+  document.getElementById('projectsBackdrop').style.display = 'none';
+}
+
+function renderProjectsList() {
+  const list = document.getElementById('projectsList');
+  list.innerHTML = '';
+  
+  projectsData.forEach((project, idx) => {
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-alt);border-radius:8px;margin-bottom:10px;';
+    
+    const emojiInput = document.createElement('input');
+    emojiInput.type = 'text';
+    emojiInput.value = project.icon;
+    emojiInput.style.cssText = 'width:40px;font-size:24px;text-align:center;border:1px solid var(--border-soft);border-radius:4px;background:white;';
+    emojiInput.placeholder = '📁';
+    emojiInput.maxLength = 2;
+    emojiInput.onchange = () => updateProjectIcon(project.id, emojiInput.value);
+    
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.value = project.title;
+    nameInput.style.cssText = 'flex:1;padding:8px;border:1px solid var(--border-soft);border-radius:4px;';
+    nameInput.onchange = () => updateProjectName(project.id, nameInput.value);
+    
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = '×';
+    deleteBtn.style.cssText = 'background:#ff4444;color:white;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:20px;';
+    deleteBtn.onclick = () => deleteProject(project.id);
+    
+    div.appendChild(emojiInput);
+    div.appendChild(nameInput);
+    div.appendChild(deleteBtn);
+    list.appendChild(div);
+  });
+}
+
+function updateProjectIcon(projectId, newIcon) {
+  const project = projectsData.find(p => p.id === projectId);
+  if (project) {
+    project.icon = newIcon || '📁';
+    saveProjects();
+    updateProjectFilterOptions();
+    render();
+  }
+}
+
+function updateProjectName(projectId, newName) {
+  const project = projectsData.find(p => p.id === projectId);
+  if (project && newName.trim()) {
+    project.title = newName.trim();
+    saveProjects();
+    updateProjectFilterOptions();
+    render();
+  }
+}
+
+function deleteProject(projectId) {
+  if (!confirm('Delete this project and all its tasks?')) return;
+  projectsData = projectsData.filter(p => p.id !== projectId);
+  saveProjects();
+  updateProjectFilterOptions();
+  closeProjectsModal();
+  render();
+}
+
+function addNewProject() {
+  const newId = 'proj' + Date.now();
+  projectsData.push({
+    id: newId,
+    icon: '📁',
+    title: 'New Project',
+    milestones: []
+  });
+  saveProjects();
+  renderProjectsList();
+  updateProjectFilterOptions();
+  render();
+}
+  
   const settings = {
     theme: "sepia",
     titleFont: '"Palatino Linotype","Book Antiqua",Palatino,serif',
@@ -1457,94 +1544,9 @@
   loadProjects();
   initSelectors();
   render();
-//</script>
+</script>
 
-  // Project Management Functions
-function openProjectsModal() {
+ 
   
-  document.getElementById('projectsBackdrop').style.display = 'flex';
-}
-
-function closeProjectsModal() {
-  document.getElementById('projectsBackdrop').style.display = 'none';
-}
-
-function renderProjectsList() {
-  const list = document.getElementById('projectsList');
-  list.innerHTML = '';
-  
-  projectsData.forEach((project, idx) => {
-    const div = document.createElement('div');
-    div.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-alt);border-radius:8px;margin-bottom:10px;';
-    
-    const emojiInput = document.createElement('input');
-    emojiInput.type = 'text';
-    emojiInput.value = project.icon;
-    emojiInput.style.cssText = 'width:40px;font-size:24px;text-align:center;border:1px solid var(--border-soft);border-radius:4px;background:white;';
-    emojiInput.placeholder = '📁';
-    emojiInput.maxLength = 2;
-    emojiInput.onchange = () => updateProjectIcon(project.id, emojiInput.value);
-    
-    const nameInput = document.createElement('input');
-    nameInput.type = 'text';
-    nameInput.value = project.title;
-    nameInput.style.cssText = 'flex:1;padding:8px;border:1px solid var(--border-soft);border-radius:4px;';
-    nameInput.onchange = () => updateProjectName(project.id, nameInput.value);
-    
-    const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = '×';
-    deleteBtn.style.cssText = 'background:#ff4444;color:white;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:20px;';
-    deleteBtn.onclick = () => deleteProject(project.id);
-    
-    div.appendChild(emojiInput);
-    div.appendChild(nameInput);
-    div.appendChild(deleteBtn);
-    list.appendChild(div);
-  });
-}
-
-function updateProjectIcon(projectId, newIcon) {
-  const project = projectsData.find(p => p.id === projectId);
-  if (project) {
-    project.icon = newIcon || '📁';
-    saveProjects();
-    updateProjectFilterOptions();
-    render();
-  }
-}
-
-function updateProjectName(projectId, newName) {
-  const project = projectsData.find(p => p.id === projectId);
-  if (project && newName.trim()) {
-    project.title = newName.trim();
-    saveProjects();
-    updateProjectFilterOptions();
-    render();
-  }
-}
-
-function deleteProject(projectId) {
-  if (!confirm('Delete this project and all its tasks?')) return;
-  projectsData = projectsData.filter(p => p.id !== projectId);
-  saveProjects();
-  updateProjectFilterOptions();
-  closeProjectsModal();
-  render();
-}
-
-function addNewProject() {
-  const newId = 'proj' + Date.now();
-  projectsData.push({
-    id: newId,
-    icon: '📁',
-    title: 'New Project',
-    milestones: []
-  });
-  saveProjects();
-  renderProjectsList();
-  updateProjectFilterOptions();
-  render();
-}
-  </script>
 </body>
 </html>
