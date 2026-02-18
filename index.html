@@ -1331,8 +1331,7 @@
       hideAutocomplete();
       return;
     } else if (e.key === "Enter") {
-      e.preventDefault();
-      const chosen = items[autocompleteIndex] || items[0];
+Revert: Remove line that broke the site - restore to working state      const chosen = items[autocompleteIndex] || items[0];
       if (chosen) modalMilestone.value = chosen.textContent;
       hideAutocomplete();
       return;
