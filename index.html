@@ -813,7 +813,7 @@ function renderProjectsList() {
     
     const emojiInput = document.createElement('input');
     emojiInput.type = 'text';
-    emojiInput.value = project.icon;
+    emojiInput.value = project.emoji;
     emojiInput.style.cssText = 'width:40px;font-size:24px;text-align:center;border:1px solid var(--border-soft);border-radius:4px;background:white;';
     emojiInput.placeholder = '📁';
     emojiInput.maxLength = 2;
@@ -821,7 +821,7 @@ function renderProjectsList() {
     
     const nameInput = document.createElement('input');
     nameInput.type = 'text';
-    nameInput.value = project.title;
+    nameInput.value = project.name;
     nameInput.style.cssText = 'flex:1;padding:8px;border:1px solid var(--border-soft);border-radius:4px;';
     nameInput.onchange = () => updateProjectName(project.id, nameInput.value);
     
@@ -840,7 +840,7 @@ function renderProjectsList() {
 function updateProjectIcon(projectId, newIcon) {
   const project = projectsData.find(p => p.id === projectId);
   if (project) {
-    project.icon = newIcon || '📁';
+    project.emoji = newIcon || '📁';
     saveProjects();
     updateProjectFilterOptions();
     render();
@@ -850,7 +850,7 @@ function updateProjectIcon(projectId, newIcon) {
 function updateProjectName(projectId, newName) {
   const project = projectsData.find(p => p.id === projectId);
   if (project && newName.trim()) {
-    project.title = newName.trim();
+    project.name = newName.trim();
     saveProjects();
     updateProjectFilterOptions();
     render();
@@ -988,6 +988,7 @@ function addNewProject() {
   const viewContainer = document.getElementById("viewContainer");
   const viewTabs = Array.from(document.querySelectorAll(".view-tab"));
   const addTaskBtn = document.getElementById("addTaskBtn");
+  const projectsBtn = document.getElementById("projectsBtn");
   const settingsFab = document.getElementById("settingsFab");
   const settingsPanel = document.getElementById("settingsPanel");
 
