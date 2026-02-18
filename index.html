@@ -663,12 +663,6 @@
         <label>Project</label>
         <select id="modalProject"></select>
       </div>
-          <div id="newProjectFields" style="display:none;">
-      <label>Project Name</label>
-      <input type="text" id="newProjectName" placeholder="e.g. PhD Research" />
-      <label>Project Emoji</label>
-      <input type="text" id="newProjectEmoji" placeholder="e.g. 🔬" maxlength="2" />
-    </div>
       <div style="flex:1;" class="autocomplete-container">
         <label>Milestone</label>
         <input type="text" id="modalMilestone" placeholder="e.g. Draft submission" autocomplete="off" />
@@ -936,11 +930,6 @@
     projectFilterEl.value = "all";
     modalProject.value = projectsData[0]?.id || "";
 
-      // Add "Create new project" option
-  const newProjOpt = document.createElement("option");
-  newProjOpt.value = "__new__";
-  newProjOpt.textContent = "➕ Create new project";
-  modalProject.appendChild(newProjOpt);
     const today = new Date();
     currentDateLabel.textContent = today.toLocaleDateString(undefined,{
       weekday:"short",year:"numeric",month:"short",day:"numeric"
@@ -1170,9 +1159,6 @@
       modalImportance.value = "Normal";
       modalDescription.value = "";
       modalDelete.style.display = "none";
-          // Hide new project fields by default
-          const newProjectFields = document.getElementById("newProjectFields");
-          if (newProjectFields) newProjectFields.style.display = "none";
     }
   }
   function closeModal() {
@@ -1180,37 +1166,17 @@
     hideAutocomplete();
   }
   function saveTaskFromModal() {
-    let projectId = modalProject.value;
+    const projectId = modalProject.value;
     const milestoneTitle = modalMilestone.value.trim() || "General";
     const title = modalTaskTitle.value.trim() || "Untitled task";
     const status = modalStatus.value;
-    let deadline = modalDeadline.value;
+    const deadline = modalDeadline.value;
     const importance = modalImportance.value;
     const description = modalDescription.value;
-
-      // Handle creating a new project
-      if (projectId === "__new__") {
-            const newProjectName = document.getElementById("newProjectName").value.trim();
-            const newProjectEmoji = document.getElementById("newProjectEmoji").value.trim() || "📁";
-            if (!newProjectName) {
-                    alert("Please enter a project name");
-                    return;
-                  }
-            const newProject = {
-                    id: "proj" + Date.now(),
-                    emoji: newProjectEmoji,
-                    name: newProjectName,
-                    milestones: []
-                          };
-            projectsData.push(newProject);
-            projectId = newProject.id; // Update projectId to the new project's ID
-            initSelectors(); // Refresh dropdown to include new project
-          }
 
     const project = projectsData.find(p=>p.id===projectId);
     if (!project) return;
     let milestone = project.milestones.find(m=>m.title===milestoneTitle);
-    
     if (!milestone) {
       milestone = { id:"m"+Date.now(), title:milestoneTitle, tasks:[] };
       project.milestones.push(milestone);
@@ -1331,7 +1297,8 @@
       hideAutocomplete();
       return;
     } else if (e.key === "Enter") {
-Revert: Remove line that broke the site - restore to working state      const chosen = items[autocompleteIndex] || items[0];
+      e.preventDefault();
+      const chosen = items[autocompleteIndex] || items[0];
       if (chosen) modalMilestone.value = chosen.textContent;
       hideAutocomplete();
       return;
@@ -1356,16 +1323,6 @@ Revert: Remove line that broke the site - restore to working state      const ch
   projectFilterEl.addEventListener("change", () => {
     currentFilter = projectFilterEl.value;
     render();
-    });
-    
-modalProject.addEventListener("change", () => {
-  const newProjectFields = document.getElementById("newProjectFields");
-  if (modalProject.value === "__new__") {
-    newProjectFields.style.display = "block";
-  } else {
-    newProjectFields.style.display = "none";
-  }
-});
   });
 
   viewTabs.forEach(tab => {
