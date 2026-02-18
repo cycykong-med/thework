@@ -614,6 +614,7 @@
 </div>
 
 <button class="fab" id="addTaskBtn" title="Add task">＋</button>
+  <button class="fab" id="projectsBtn" title="Manage projects" style="right: 92px;">#</button>
 <button class="settings-fab" id="settingsFab" title="Settings">⚙️</button>
 
 <div id="settingsPanel">
@@ -658,6 +659,20 @@
 <div class="modal-backdrop" id="modalBackdrop">
   <div class="modal">
     <h2 id="modalTitleHeader">Add Task</h2>
+
+    <!-- Projects Management Modal -->
+<div class="modal-backdrop" id="projectsBackdrop" style="display:none;">
+  <div class="modal">
+    <h2 id="projectsModalHeader">Manage Projects</h2>
+    <div class="modal-row">
+      <div id="projectsList"></div>
+    </div>
+    <div class="modal-row" style="margin-top:20px;">
+      <button onclick="addNewProject()" style="background:var(--accent);color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">＋ Add New Project</button>
+      <button onclick="closeProjectsModal()" style="background:var(--border-soft);border:none;padding:8px 16px;border-radius:6px;cursor:pointer;margin-left:8px;">Close</button>
+    </div>
+  </div>
+</div>
     <div class="modal-row">
       <div style="flex:1;">
         <label>Project</label>
@@ -1339,6 +1354,7 @@
   modalBackdrop.addEventListener("click", (e) => { if (e.target===modalBackdrop) closeModal(); });
   modalSave.addEventListener("click", saveTaskFromModal);
   modalDelete.addEventListener("click", deleteTaskFromModal);
+  projectsBtn.addEventListener("click", openProjectsModal);
 
   settingsFab.addEventListener("click", () => {
     settingsPanel.style.display = settingsPanel.style.display === "none" ? "block" : "none";
@@ -1442,5 +1458,92 @@
   initSelectors();
   render();
 </script>
+
+  // Project Management Functions
+function openProjectsModal() {
+  renderProjectsList();
+  document.getElementById('projectsBackdrop').style.display = 'flex';
+}
+
+function closeProjectsModal() {
+  document.getElementById('projectsBackdrop').style.display = 'none';
+}
+
+function renderProjectsList() {
+  const list = document.getElementById('projectsList');
+  list.innerHTML = '';
+  
+  projectsData.forEach((project, idx) => {
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-alt);border-radius:8px;margin-bottom:10px;';
+    
+    const emojiInput = document.createElement('input');
+    emojiInput.type = 'text';
+    emojiInput.value = project.icon;
+    emojiInput.style.cssText = 'width:40px;font-size:24px;text-align:center;border:1px solid var(--border-soft);border-radius:4px;background:white;';
+    emojiInput.placeholder = '📁';
+    emojiInput.maxLength = 2;
+    emojiInput.onchange = () => updateProjectIcon(project.id, emojiInput.value);
+    
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.value = project.title;
+    nameInput.style.cssText = 'flex:1;padding:8px;border:1px solid var(--border-soft);border-radius:4px;';
+    nameInput.onchange = () => updateProjectName(project.id, nameInput.value);
+    
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = '×';
+    deleteBtn.style.cssText = 'background:#ff4444;color:white;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:20px;';
+    deleteBtn.onclick = () => deleteProject(project.id);
+    
+    div.appendChild(emojiInput);
+    div.appendChild(nameInput);
+    div.appendChild(deleteBtn);
+    list.appendChild(div);
+  });
+}
+
+function updateProjectIcon(projectId, newIcon) {
+  const project = projectsData.find(p => p.id === projectId);
+  if (project) {
+    project.icon = newIcon || '📁';
+    saveProjects();
+    updateProjectFilterOptions();
+    render();
+  }
+}
+
+function updateProjectName(projectId, newName) {
+  const project = projectsData.find(p => p.id === projectId);
+  if (project && newName.trim()) {
+    project.title = newName.trim();
+    saveProjects();
+    updateProjectFilterOptions();
+    render();
+  }
+}
+
+function deleteProject(projectId) {
+  if (!confirm('Delete this project and all its tasks?')) return;
+  projectsData = projectsData.filter(p => p.id !== projectId);
+  saveProjects();
+  updateProjectFilterOptions();
+  closeProjectsModal();
+  render();
+}
+
+function addNewProject() {
+  const newId = 'proj' + Date.now();
+  projectsData.push({
+    id: newId,
+    icon: '📁',
+    title: 'New Project',
+    milestones: []
+  });
+  saveProjects();
+  renderProjectsList();
+  updateProjectFilterOptions();
+  render();
+}
 </body>
 </html>
